@@ -1,6 +1,6 @@
 from account.forms import *
-from django.contrib import messages
 from django.urls import reverse
+from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth import authenticate, login as auth_login, logout
@@ -31,3 +31,7 @@ def userLogin(request):
     }
 
     return render(request, 'pages/auth/login.html', context)
+
+def userLogout(request):
+    logout(request)
+    return redirect('auth:login')
