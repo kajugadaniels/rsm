@@ -1,10 +1,10 @@
-from account.forms import *
+from account.forms import LoginForm, UserProfileForm, PasswordChangeForm
 from django.urls import reverse
 from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.utils.translation import gettext_lazy as _
+from django.contrib.auth import authenticate, login as auth_login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import login as auth_login, logout, update_session_auth_hash
 
 def userLogin(request):
     if request.user.is_authenticated:
@@ -48,6 +48,7 @@ def userProfile(request):
         if 'update_profile' in request.POST:
             profile_form = UserProfileForm(request.POST, request.FILES, instance=user)
             if profile_form.is_valid():
+                # Handle image deletion if a new image is uploaded
                 if 'image' in request.FILES and user.image:
                     user.image.delete(save=False)
                 profile_form.save()
@@ -55,7 +56,7 @@ def userProfile(request):
                 return redirect('auth:userProfile')
             else:
                 messages.error(request, _("Please correct the errors in the profile form and try again."))
-        
+
         elif 'change_password' in request.POST:
             password_form = PasswordChangeForm(user, request.POST)
             if password_form.is_valid():

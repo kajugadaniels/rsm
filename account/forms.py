@@ -1,7 +1,8 @@
 from django import forms
 from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.password_validation import validate_password, get_password_validators
+from account.models import User
 
 class LoginForm(forms.Form):
     email = forms.EmailField(
@@ -140,7 +141,7 @@ class PasswordChangeForm(forms.Form):
             'id': 'new_password',
         }),
         label=_('New Password'),
-        help_text=validate_password.help_text,
+        help_text=_('Your password must contain at least 8 characters, including a mix of letters, numbers, and symbols.'),
         error_messages={
             'required': _('Please enter a new password.'),
         }
