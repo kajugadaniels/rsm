@@ -1,23 +1,25 @@
 import os
 from django.db import models
+from account.managers import *
 from django.utils import timezone
 from django.utils.text import slugify
-from account.managers import *
 from imagekit.processors import ResizeToFill
 from imagekit.models import ProcessedImageField
 from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, Permission
 
 def user_image_path(instance, filename):
     base_filename, file_extension = os.path.splitext(filename)
     return f'profile_images/user_{slugify(instance.slug)}_{instance.phone_number}{file_extension}'
 
-class User(AbstractBaseUser, PermissionsMixin):
-    ROLE_CHOICES = (
-        ('User', 'User'),
-        ('Client', 'Client'),
-    )
+class Role(models.Model):
+    name = models.CharField(max_length=30, unique=True)
+    permissions = models.ManyToManyField(Permission, blank=True)
 
+    def __str__(self):
+        return self.name
+
+class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=15, unique=True)
@@ -29,7 +31,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         null=True,
         blank=True,
     )
-    role = models.CharField(max_length=30, choices=ROLE_CHOICES)
+    role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, blank=True)
     slug = models.SlugField(unique=True, max_length=255, null=True, blank=True)
     
     added_by = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='added_users')
@@ -49,11 +51,21 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.email
 
     def save(self, *args, **kwargs):
-        # Check if the instance already exists in the database
-        if self.pk:
+        # Handle image deletion and permissions assignment
+        try:
             orig = User.objects.get(pk=self.pk)
+        except User.DoesNotExist:
+            orig = None
+
+        if orig:
+            # Handle image deletion if image has changed
+            if orig.image and self.image != orig.image:
+                orig.image.delete(save=False)
+            # Handle role change
+            if orig.role != self.role:
+                self.set_permissions()
+            # Handle name change to update slug
             if orig.name != self.name:
-                # Name has changed; update the slug
                 self.slug = self.generate_unique_slug()
         else:
             # New instance; generate slug if not provided
@@ -61,6 +73,15 @@ class User(AbstractBaseUser, PermissionsMixin):
                 self.slug = self.generate_unique_slug()
 
         super(User, self).save(*args, **kwargs)
+
+        # Assign permissions based on role after saving
+        self.set_permissions()
+
+    def set_permissions(self):
+        if self.role:
+            self.user_permissions.set(self.role.permissions.all())
+        else:
+            self.user_permissions.clear()
 
     def generate_unique_slug(self):
         """
