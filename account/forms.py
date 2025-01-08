@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
+from django.contrib.auth.models import User as AuthUser
 
 class LoginForm(forms.Form):
     email = forms.EmailField(
@@ -23,6 +24,12 @@ class LoginForm(forms.Form):
         label=_('Password')
     )
 
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if not AuthUser.objects.filter(email=email).exists():
+            raise forms.ValidationError(_('No account found with this email address. Please check and try again.'))
+        return email
+
     def clean(self):
         cleaned_data = super().clean()
         email = cleaned_data.get('email')
@@ -31,8 +38,8 @@ class LoginForm(forms.Form):
         if email and password:
             user = authenticate(email=email, password=password)
             if not user:
-                raise forms.ValidationError(_('Invalid email or password'))
+                raise forms.ValidationError(_('Incorrect password. Please try again.'))
             if not user.is_active:
-                raise forms.ValidationError(_('This account is inactive.'))
+                raise forms.ValidationError(_('Your account is inactive. Please contact support for assistance.'))
             cleaned_data['user'] = user
         return cleaned_data
