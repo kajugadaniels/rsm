@@ -4,6 +4,15 @@ from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
+@admin.register(Role)
+class RoleAdmin(admin.ModelAdmin):
+    """
+    Admin interface for Role model.
+    """
+    list_display = ('name',)
+    search_fields = ('name',)
+    filter_horizontal = ('permissions',)
+
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
     """
@@ -81,7 +90,7 @@ class UserAdmin(BaseUserAdmin):
 
     # Specify the custom manager
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related('added_by')
+        return super().get_queryset(request).select_related('added_by', 'role')
 
     # Override to ensure proper handling of password hashing
     def save_model(self, request, obj, form, change):
