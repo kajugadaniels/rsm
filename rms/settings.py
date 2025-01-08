@@ -153,9 +153,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'account.User'
 
 JAZZMIN_SETTINGS = {
-    "site_title": "RMS",
-    "site_header": "RMS",
-    "site_brand": "RMS",
+    "site_title": "RSM",
+    "site_header": "RSM",
+    "site_brand": "RSM",
     "welcome_sign": "Rwanda Special Materials Admin Login",
     "show_sidebar": True,
     "navigation_expanded": True,
