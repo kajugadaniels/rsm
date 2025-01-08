@@ -1,7 +1,6 @@
 from django import forms
 from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.models import User as AuthUser
 
 class LoginForm(forms.Form):
     email = forms.EmailField(
@@ -12,7 +11,11 @@ class LoginForm(forms.Form):
             'required': 'required',
             'id': 'emailaddress',
         }),
-        label=_('Email address')
+        label=_('Email Address'),
+        error_messages={
+            'required': _('Please enter your email address.'),
+            'invalid': _('Enter a valid email address.'),
+        }
     )
     password = forms.CharField(
         widget=forms.PasswordInput(attrs={
@@ -21,14 +24,11 @@ class LoginForm(forms.Form):
             'required': 'required',
             'id': 'password',
         }),
-        label=_('Password')
+        label=_('Password'),
+        error_messages={
+            'required': _('Please enter your password.'),
+        }
     )
-
-    def clean_email(self):
-        email = self.cleaned_data.get('email')
-        if not AuthUser.objects.filter(email=email).exists():
-            raise forms.ValidationError(_('No account found with this email address. Please check and try again.'))
-        return email
 
     def clean(self):
         cleaned_data = super().clean()
@@ -38,8 +38,14 @@ class LoginForm(forms.Form):
         if email and password:
             user = authenticate(email=email, password=password)
             if not user:
-                raise forms.ValidationError(_('Incorrect password. Please try again.'))
+                raise forms.ValidationError(_('The email or password you entered is incorrect. Please try again.'))
             if not user.is_active:
-                raise forms.ValidationError(_('Your account is inactive. Please contact support for assistance.'))
+                raise forms.ValidationError(_('Your account is currently inactive. Please contact support for assistance.'))
             cleaned_data['user'] = user
+        else:
+            if not email:
+                self.add_error('email', _('Email address is required.'))
+            if not password:
+                self.add_error('password', _('Password is required.'))
+
         return cleaned_data
