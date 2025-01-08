@@ -150,6 +150,8 @@ WHITENOISE_AUTOREFRESH = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+AUTH_USER_MODEL = 'account.User'
+
 JAZZMIN_SETTINGS = {
     "site_title": "RMS",
     "site_header": "RMS",
