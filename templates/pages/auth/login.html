@@ -2,79 +2,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <title>RMS - Login</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta content="Rwanda Special Materials Stock Management System" name="description" />
-    <meta content="NEXCODE" name="author" />
-    <link rel="shortcut icon" href="{% static 'images/favicon.ico' %}">
-    <script src="{% static 'js/config.js' %}"></script>
-    <link href="{% static 'css/app.min.css' %}" rel="stylesheet" type="text/css" id="app-style" />
-    <link href="{% static 'css/icons.min.css' %}" rel="stylesheet" type="text/css" />
+    <meta name="description" content="eStock">
+    <meta name="keywords" content="eStock">
+    <meta name="author" content="pixelstrap">
+    <link rel="icon" href="{% static 'images/logo/favicon.png' %}" type="image/x-icon">
+    <link rel="shortcut icon" href="{% static 'images/logo/favicon.png' %}" type="image/x-icon">
+    <title>eStock - Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/font-awesome.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/vendors/icofont.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/vendors/themify.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/vendors/flag-icon.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/vendors/feather-icon.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/vendors/bootstrap.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/responsive.css' %}">
 </head>
 
-<body class="authentication-bg position-relative">
-    <div class="account-pages pt-2 pt-sm-5 pb-4 pb-sm-5 position-relative">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-xxl-8 col-lg-10">
-                    <div class="card overflow-hidden">
-                        <div class="row g-0">
-                            <div class="col-lg-6 d-none d-lg-block p-2">
-                                <img src="https://www.micemag.com/wp-content/uploads/2022/03/mice-rwanda-kigali-convention-centre-03-mice-magazine.jpg" alt="" class="img-fluid rounded h-100">
-                            </div>
-                            <div class="col-lg-6">
-                                <div class="d-flex flex-column h-100">
-                                    <div class="auth-brand p-4">
-                                        <a href="#" class="logo-light">
-                                            {% comment %} <img src="assets/images/logo.png" alt="logo" height="22"> {% endcomment %}
-                                            Rwanda Special Materials
-                                        </a>
-                                    </div>
-                                    <div class="p-4 my-auto">
-                                        <h4 class="fs-20">Sign In</h4>
-                                        <p class="text-muted mb-3">Enter your email address and password to access
-                                            your account.
-                                        </p>
-
-                                        <!-- form -->
-                                        <form method="post" action="{% url 'auth:login' %}">
-                                            {% csrf_token %}
-                                            {% if messages %}
-                                                {% for message in messages %}
-                                                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                                        {{ message }}
-                                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                                    </div>
-                                                {% endfor %}
-                                            {% endif %}
-                                            <div class="mb-3">
-                                                {{ form.email.label_tag }}
-                                                {{ form.email }}
-                                                {% for error in form.email.errors %}
-                                                    <div class="text-danger">{{ error }}</div>
-                                                {% endfor %}
-                                            </div>
-                                            <div class="mb-3">
-                                                <a href="#" class="text-muted float-end"><small>Forgot your password?</small></a>
-                                                {{ form.password.label_tag }}
-                                                {{ form.password }}
-                                                {% for error in form.password.errors %}
-                                                    <div class="text-danger">{{ error }}</div>
-                                                {% endfor %}
-                                            </div>
-                                            <div class="mb-0 text-start">
-                                                <button class="btn btn-soft-primary w-100" type="submit">
-                                                    <i class="ri-login-circle-fill me-1"></i> 
-                                                    <span class="fw-bold">
-                                                        Log In
-                                                    </span>
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xl-7 d-none d-xl-block" style="background-color: #7A70BA;">
+                {% comment %} <img class="bg-img-cover bg-center" src="{% static 'https://www.micemag.com/wp-content/uploads/2022/03/mice-rwanda-kigali-convention-centre-03-mice-magazine.jpg' %}" alt="loginpage"> {% endcomment %}
+            </div>
+            <div class="col-xl-5 p-0">
+                <div class="login-card login-dark">
+                    <div>
+                        <div>
+                            <a class="logo text-start" href="#">
+                                Welcome on Rwanda Special Materials
+                            </a>
+                        </div>
+                        <div class="login-main">
+                            <form class="theme-form" method="POST" action="{% url 'auth:login' %}">
+                                {% csrf_token %}
+                                <h4>Log in to account</h4>
+                                <p>by entering the user's email and password</p>
+                                {% if messages %}
+                                    {% for message in messages %}
+                                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                            {{ message }}
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                                <div class="form-group">
+                                    {{ form.email.label_tag }}
+                                    {{ form.email }}
+                                    {% for error in form.email.errors %}
+                                        <div class="text-danger">{{ error }}</div>
+                                    {% endfor %}
                                 </div>
-                            </div>
+                                <div class="form-group">
+                                    {{ form.password.label_tag }}
+                                    {{ form.password }}
+                                    {% for error in form.password.errors %}
+                                        <div class="text-danger">{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                                <div class="form-group mb-0">
+                                    <button class="btn btn-primary btn-block w-100" type="submit" style="height: 50px;">Sign In</button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -82,12 +76,11 @@
         </div>
     </div>
 
-    <footer class="footer footer-alt fw-medium">
-        <span class="text-dark">
-            <script>document.write(new Date().getFullYear())</script> © Rwanda Special Materials
-        </span>
-    </footer>
-    <script src="{% static 'js/vendor.min.js' %}"></script>
-    <script src="{% static 'js/app.min.js' %}"></script>
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'js/icons/feather-icon/feather.min.js' %}"></script>
+    <script src="{% static 'js/icons/feather-icon/feather-icon.js' %}"></script>
+    <script src="{% static 'js/config.js' %}"></script>
+    <script src="{% static 'js/script.js' %}"></script>
 </body>
 </html>
