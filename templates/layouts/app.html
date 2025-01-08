@@ -1,1 +1,26 @@
-<h1>App</h1>
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Rwanda Special Materials</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="Rwanda Special Materials Stock Management System, developed by NEXCODE" name="description" />
+    <meta content="NEXCODE" name="author" />
+    <link rel="shortcut icon" href="images/favicon.ico">
+    <script src="{% static 'js/config.js' %}"></script>
+    <link href="{% static 'css/app.min.css' %}" rel="stylesheet" type="text/css" id="app-style" />
+    <link href="{% static 'css/icons.min.css' %}" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+    {% include 'components/navbar.html' %}
+
+    {% include 'components/sidebar.html' %}
+
+    {% block content %}{% endblock %}
+
+    <script src="{% static 'js/vendor.min.js' %}"></script>
+    <script src="{% static 'js/app.min.js' %}"></script>
+</body>
+</html>
