@@ -11,11 +11,7 @@ class LoginForm(forms.Form):
             'required': 'required',
             'id': 'emailaddress',
         }),
-        label=_('Email Address'),
-        error_messages={
-            'required': _('Please enter your email address.'),
-            'invalid': _('Enter a valid email address.'),
-        }
+        label=_('Email address')
     )
     password = forms.CharField(
         widget=forms.PasswordInput(attrs={
@@ -24,10 +20,7 @@ class LoginForm(forms.Form):
             'required': 'required',
             'id': 'password',
         }),
-        label=_('Password'),
-        error_messages={
-            'required': _('Please enter your password.'),
-        }
+        label=_('Password')
     )
 
     def clean(self):
@@ -38,14 +31,8 @@ class LoginForm(forms.Form):
         if email and password:
             user = authenticate(email=email, password=password)
             if not user:
-                raise forms.ValidationError(_('The email or password you entered is incorrect. Please try again.'))
+                raise forms.ValidationError(_('Invalid email or password'))
             if not user.is_active:
-                raise forms.ValidationError(_('Your account is currently inactive. Please contact support for assistance.'))
+                raise forms.ValidationError(_('This account is inactive.'))
             cleaned_data['user'] = user
-        else:
-            if not email:
-                self.add_error('email', _('Email address is required.'))
-            if not password:
-                self.add_error('password', _('Password is required.'))
-
         return cleaned_data
