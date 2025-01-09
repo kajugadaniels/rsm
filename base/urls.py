@@ -17,4 +17,9 @@ urlpatterns = [
     path('product/add/', addProduct, name="addProduct"),
     path('product/edit/<slug>/', editProduct, name="editProduct"),
     path('product/delete/<slug>/', deleteProduct, name="deleteProduct"),
+
+    path('clients/', getClients, name="getClients"),
+    path('client/add/', addClient, name="addClient"),
+    path('client/edit/<int:id>/', editClient, name="editClient"),
+    path('client/delete/<int:id>/', deleteClient, name="deleteClient"),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
