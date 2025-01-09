@@ -109,7 +109,7 @@ class OrderProduct(models.Model):
 
     def save(self, *args, **kwargs):
         self.total_size = self.size * self.quantity
-        self.total_price = self.size * self.unit_price
+        self.total_price = self.total_size * self.unit_price
         super(OrderProduct, self).save(*args, **kwargs)
         self.order.calculate_grand_total()
 
