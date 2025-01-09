@@ -156,3 +156,60 @@ class OrderForm(forms.ModelForm):
                 'max_length': _('Destination cannot exceed 255 characters.'),
             },
         }
+
+class OrderProductForm(forms.ModelForm):
+    class Meta:
+        model = OrderProduct
+        fields = ['product', 'size', 'quantity', 'unit_price']
+        widgets = {
+            'product': forms.Select(attrs={
+                'class': 'form-control product-select',
+                'required': 'required',
+            }),
+            'size': forms.NumberInput(attrs={
+                'class': 'form-control size-input',
+                'min': '0',
+                'step': '0.1',
+                'required': 'required',
+            }),
+            'quantity': forms.NumberInput(attrs={
+                'class': 'form-control quantity-input',
+                'min': '1',
+                'required': 'required',
+            }),
+            'unit_price': forms.NumberInput(attrs={
+                'class': 'form-control unit-price-input',
+                'min': '0',
+                'step': '0.01',
+                'required': 'required',
+            }),
+        }
+        labels = {
+            'product': _('Product'),
+            'size': _('Size'),
+            'quantity': _('Quantity'),
+            'unit_price': _('Unit Price'),
+        }
+        error_messages = {
+            'product': {
+                'required': _('Please select a product.'),
+            },
+            'size': {
+                'required': _('Please enter the size.'),
+                'invalid': _('Enter a valid size.'),
+            },
+            'quantity': {
+                'required': _('Please enter the quantity.'),
+                'invalid': _('Enter a valid quantity.'),
+            },
+            'unit_price': {
+                'required': _('Please enter the unit price.'),
+                'invalid': _('Enter a valid unit price.'),
+            },
+        }
+
+    def clean_product(self):
+        product = self.cleaned_data.get('product')
+        if not Product.objects.filter(id=product.id).exists():
+            raise forms.ValidationError(_('Selected product does not exist.'))
+        return product
