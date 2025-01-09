@@ -1,4 +1,3 @@
-{# templates/pages/orders/edit.html #}
 {% extends 'layouts/app.html' %}
 {% load static %}
 {% block content %}
@@ -103,6 +102,12 @@
                                     <td>
                                         <button type="button" class="btn btn-danger remove-order-product">Remove</button>
                                     </td>
+                                    {# Hidden input to store OrderProduct ID #}
+                                    {% if form.instance.id %}
+                                        <input type="hidden" name="{{ forloop.counter0 }}-id" value="{{ form.instance.id }}">
+                                    {% else %}
+                                        <input type="hidden" name="{{ forloop.counter0 }}-id" value="">
+                                    {% endif %}
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -196,6 +201,23 @@
 </style>
 
 <script>
+// Function to get CSRF token from cookies
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     let orderProductIndex = {{ order_product_forms|length }};
 
@@ -315,20 +337,54 @@ document.addEventListener('DOMContentLoaded', function() {
             <td>
                 <button type="button" class="btn btn-danger remove-order-product">Remove</button>
             </td>
+            <input type="hidden" name="${orderProductIndex}-id" value="">
         `;
         orderProductsTable.appendChild(newRow);
         orderProductIndex++;
     });
 
-    // Remove Order Product Row
+    // Remove Order Product Row with AJAX Deletion
     orderProductsTable.addEventListener('click', function(e) {
         if (e.target && e.target.matches('button.remove-order-product')) {
-            const rows = orderProductsTable.getElementsByTagName('tr');
-            if (rows.length > 1) {
-                e.target.closest('tr').remove();
-                updateGrandTotal();
+            const row = e.target.closest('tr');
+            const formPrefix = row.getAttribute('data-form-prefix');
+            const orderProductIdInput = row.querySelector(`input[name="${formPrefix}-id"]`);
+            const orderProductId = orderProductIdInput ? orderProductIdInput.value : null;
+
+            if (orderProductId) {
+                // Existing OrderProduct, send AJAX request to delete
+                if (confirm('Are you sure you want to remove this product from the order?')) {
+                    fetch("{% url 'base:deleteOrderProduct' 0 %}".replace('/0/', `/${orderProductId}/`), {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken'),
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        body: JSON.stringify({})
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            row.remove();
+                            updateGrandTotal();
+                        } else {
+                            alert(data.error || 'Failed to delete the product.');
+                        }
+                    })
+                    .catch(error => {
+                        alert('An error occurred while deleting the product.');
+                    });
+                }
             } else {
-                alert('At least one product must be present in the order.');
+                // New OrderProduct, just remove the row
+                const rows = orderProductsTable.getElementsByTagName('tr');
+                if (rows.length > 1) {
+                    row.remove();
+                    updateGrandTotal();
+                } else {
+                    alert('At least one product must be present in the order.');
+                }
             }
         }
     });
