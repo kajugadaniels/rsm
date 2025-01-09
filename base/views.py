@@ -2,6 +2,7 @@ from base.forms import *
 from base.models import *
 from account.models import *
 from django.urls import reverse
+from django.db import transaction
 from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
 from django.shortcuts import render, get_object_or_404, redirect
@@ -285,3 +286,40 @@ def getOrders(request):
         'orders': orders,
     }
     return render(request, 'pages/orders/index.html', context)
+
+@login_required
+@permission_required('base.add_order', raise_exception=True)
+@transaction.atomic
+def addOrder(request):
+    if request.method == 'POST':
+        order_form = OrderForm(request.POST)
+        order_product_forms = [OrderProductForm(request.POST, prefix=str(x)) for x in range(0, int(request.POST.get('form-TOTAL_FORMS', 1)))]
+        
+        if order_form.is_valid() and all([form.is_valid() for form in order_product_forms]):
+            order = order_form.save(commit=False)
+            order.addedBy = request.user
+            order.updatedBy = request.user
+            order.save()
+            
+            for form in order_product_forms:
+                order_product = form.save(commit=False)
+                order_product.order = order
+                order_product.save()
+            
+            messages.success(
+                request, 
+                _("The order '%(order)s' has been created successfully.") % {'order': order.orderId}
+            )
+            return redirect(reverse('base:getOrders'))
+        else:
+            messages.error(request, _("Please correct the errors below and try again."))
+    else:
+        order_form = OrderForm()
+        order_product_forms = [OrderProductForm(prefix='0')]
+    
+    context = {
+        'order_form': order_form,
+        'order_product_forms': order_product_forms,
+        'title': _('Add New Order'),
+    }
+    return render(request, 'pages/orders/create.html', context)
