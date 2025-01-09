@@ -94,3 +94,25 @@ class Order(models.Model):
         """
         self.grand_total = self.order_products.aggregate(total=models.Sum('total_price'))['total'] or 0.00
         super(Order, self).save(update_fields=['grand_total'])
+
+class OrderProduct(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_products')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    size = models.FloatField()
+    quantity = models.PositiveIntegerField()
+    total_size = models.FloatField(editable=False)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    total_price = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
+
+    def __str__(self):
+        return f"{self.product.name} x {self.quantity} for {self.order.orderId}"
+
+    def save(self, *args, **kwargs):
+        self.total_size = self.size * self.quantity
+        self.total_price = self.size * self.unit_price
+        super(OrderProduct, self).save(*args, **kwargs)
+        self.order.calculate_grand_total()
+
+    def delete(self, *args, **kwargs):
+        super(OrderProduct, self).delete(*args, **kwargs)
+        self.order.calculate_grand_total()
