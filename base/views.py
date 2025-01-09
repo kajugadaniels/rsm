@@ -364,3 +364,22 @@ def editOrder(request, orderId):
     }
 
     return render(request, 'pages/orders/edit.html', context)
+
+@login_required
+@permission_required('base.delete_order', raise_exception=True)
+def deleteOrder(request, orderId):
+    order = get_object_or_404(Order, orderId=orderId)
+    
+    if request.method == 'POST':
+        order.delete()
+        messages.success(
+            request, 
+            _("The order '%(order)s' has been deleted successfully.") % {'order': order.orderId}
+        )
+        return redirect(reverse('base:getOrders'))
+    
+    context = {
+        'order': order,
+    }
+
+    return render(request, 'pages/orders/delete.html', context)
