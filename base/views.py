@@ -210,69 +210,140 @@ def getClients(request):
 
     return render(request, 'pages/clients/index.html', context)
 
-@csrf_exempt
 @login_required
-@permission_required('base.add_client', raise_exception=True)
-def addClient(request):
+@permission_required('base.add_order', raise_exception=True)
+@transaction.atomic
+def addOrder(request):
     if request.method == 'POST':
-        form = ClientForm(request.POST)
-        if form.is_valid():
-            client = form.save()
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                # Return JSON response for AJAX
-                return JsonResponse({
-                    'id': client.id,
-                    'phone_number': client.phone_number,
-                    'name': client.name
-                })
-            else:
+        order_form = OrderForm(request.POST)
+
+        # Dynamically find all unique prefixes for OrderProduct forms
+        prefixes = set()
+        pattern = re.compile(r'^(\d+)-')
+        for key in request.POST.keys():
+            match = pattern.match(key)
+            if match:
+                prefixes.add(match.group(1))
+        sorted_prefixes = sorted(prefixes)
+        
+        # Only include prefixes with data in required fields
+        order_product_forms = []
+        for prefix in sorted_prefixes:
+            # Check if at least one required field is present
+            product_id = request.POST.get(f'{prefix}-product')
+            size = request.POST.get(f'{prefix}-size')
+            quantity = request.POST.get(f'{prefix}-quantity')
+            unit_price = request.POST.get(f'{prefix}-unit_price')
+
+            if product_id or size or quantity or unit_price:
+                form = OrderProductForm(request.POST, prefix=prefix)
+                order_product_forms.append(form)
+        
+        # Ensure at least one OrderProduct form is present
+        if not order_product_forms:
+            order_form.add_error(None, _('At least one product must be added to the order.'))
+        else:
+            # Check if all forms are valid
+            if order_form.is_valid() and all([form.is_valid() for form in order_product_forms]):
+                order = order_form.save(commit=False)
+                order.addedBy = request.user
+                order.updatedBy = request.user
+                order.save()
+                
+                for form in order_product_forms:
+                    order_product = form.save(commit=False)
+                    order_product.order = order
+                    order_product.save()
+                
                 messages.success(
                     request, 
-                    _("The client '%(client)s' has been created successfully.") % {'client': client.name}
+                    _("The order '%(order)s' has been created successfully.") % {'order': order.orderId}
                 )
-                return redirect(reverse('base:getClients'))
-        else:
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'errors': form.errors}, status=400)
+                return redirect(reverse('base:getOrders'))
             else:
                 messages.error(request, _("Please correct the errors below and try again."))
     else:
-        form = ClientForm()
+        order_form = OrderForm()
+        order_product_forms = [OrderProductForm(prefix='0')]
     
     context = {
-        'form': form,
-        'title': _('Add New Client'),
+        'order_form': order_form,
+        'order_product_forms': order_product_forms,
+        'title': _('Add New Order'),
     }
-    return render(request, 'pages/clients/create.html', context)
+    return render(request, 'pages/orders/create.html', context)
 
 @login_required
-@permission_required('base.change_client', raise_exception=True)
-def editClient(request, id):
-    """
-    Edit an existing Client instance identified by its ID.
-    """
-    client = get_object_or_404(Client, id=id)
+@permission_required('base.change_order', raise_exception=True)
+@transaction.atomic
+def editOrder(request, orderId):
+    order = get_object_or_404(Order, orderId=orderId)
+    order_products = order.order_products.all()
     
     if request.method == 'POST':
-        form = ClientForm(request.POST, instance=client)
-        if form.is_valid():
-            client = form.save()
-            messages.success(
-                request, 
-                _("The client '%(client)s' has been updated successfully.") % {'client': client.name}
-            )
-            return redirect(reverse('base:getClients'))
+        order_form = OrderForm(request.POST, instance=order)
+        
+        # Dynamically find all unique prefixes for OrderProduct forms
+        prefixes = set()
+        pattern = re.compile(r'^(\d+)-')
+        for key in request.POST.keys():
+            match = pattern.match(key)
+            if match:
+                prefixes.add(match.group(1))
+        sorted_prefixes = sorted(prefixes)
+        
+        # Map prefixes to existing OrderProducts or create new forms
+        order_product_forms = []
+        existing_order_products = list(order_products)
+        for prefix in sorted_prefixes:
+            # Check if at least one required field is present
+            product_id = request.POST.get(f'{prefix}-product')
+            size = request.POST.get(f'{prefix}-size')
+            quantity = request.POST.get(f'{prefix}-quantity')
+            unit_price = request.POST.get(f'{prefix}-unit_price')
+
+            if product_id or size or quantity or unit_price:
+                if prefix.isdigit() and int(prefix) < len(existing_order_products):
+                    instance = existing_order_products[int(prefix)]
+                else:
+                    instance = None
+                form = OrderProductForm(request.POST, instance=instance, prefix=prefix)
+                order_product_forms.append(form)
+        
+        # Ensure at least one OrderProduct form is present
+        if not order_product_forms:
+            order_form.add_error(None, _('At least one product must be added to the order.'))
         else:
-            messages.error(request, _("Please correct the errors below and try again."))
+            # Check if all forms are valid
+            if order_form.is_valid() and all([form.is_valid() for form in order_product_forms]):
+                order = order_form.save(commit=False)
+                order.updatedBy = request.user
+                order.save()
+                
+                for form in order_product_forms:
+                    order_product = form.save(commit=False)
+                    order_product.order = order
+                    order_product.save()
+                
+                messages.success(
+                    request, 
+                    _("The order '%(order)s' has been updated successfully.") % {'order': order.orderId}
+                )
+                return redirect(reverse('base:getOrders'))
+            else:
+                messages.error(request, _("Please correct the errors below and try again."))
     else:
-        form = ClientForm(instance=client)
+        order_form = OrderForm(instance=order)
+        order_product_forms = [OrderProductForm(instance=op, prefix=str(x)) for x, op in enumerate(order_products)]
     
     context = {
-        'form': form,
-        'title': _('Edit Client: %(client)s') % {'client': client.name},
+        'order_form': order_form,
+        'order_product_forms': order_product_forms,
+        'order': order,
+        'title': _('Edit Order: %(order)s') % {'order': order.orderId},
     }
 
-    return render(request, 'pages/clients/edit.html', context)
+    return render(request, 'pages/orders/edit.html', context)
 
 @login_required
 @permission_required('base.delete_client', raise_exception=True)
