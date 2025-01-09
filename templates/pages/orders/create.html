@@ -131,18 +131,18 @@
         <form id="add-client-form">
             {% csrf_token %}
             <div class="mb-3">
-                <label class="form-label">{{ add_client_form.name.label }}</label>
-                {{ add_client_form.name }}
+                <label class="form-label">Client Name</label>
+                <input type="text" name="name" class="form-control" placeholder="Enter client name">
                 <div class="text-danger" id="error-name"></div>
             </div>
             <div class="mb-3">
-                <label class="form-label">{{ add_client_form.phone_number.label }}</label>
-                {{ add_client_form.phone_number }}
+                <label class="form-label">Phone Number</label>
+                <input type="number" name="phone_number" class="form-control" placeholder="Enter phone number">
                 <div class="text-danger" id="error-phone_number"></div>
             </div>
             <div class="mb-3">
-                <label class="form-label">{{ add_client_form.destination.label }}</label>
-                {{ add_client_form.destination }}
+                <label class="form-label">Destination</label>
+                <input type="text" name="destination" class="form-control" placeholder="Enter destination">
                 <div class="text-danger" id="error-destination"></div>
             </div>
             <div class="text-end">
