@@ -1,4 +1,3 @@
-{# templates/pages/orders/create.html #}
 {% extends 'layouts/app.html' %}
 {% load static %}
 {% block content %}
@@ -228,6 +227,7 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': '{{ csrf_token }}',
             },
             body: formData
         })
@@ -350,7 +350,8 @@ document.addEventListener('DOMContentLoaded', function() {
         let grandTotal = 0.00;
         const totalPriceInputs = document.querySelectorAll('.total-price-input');
         totalPriceInputs.forEach(function(input) {
-            const price = parseFloat(input.value.replace('RWF ', '')) || 0.00;
+            const priceText = input.value.replace('RWF ', '').replace(',', '');
+            const price = parseFloat(priceText) || 0.00;
             grandTotal += price;
         });
         document.getElementById('grand-total').value = `RWF ${grandTotal.toFixed(2)}`;
@@ -367,6 +368,14 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 options[i].style.display = 'none';
             }
+        }
+    });
+
+    // Close Modal When Clicking Outside Content
+    window.addEventListener('click', function(event) {
+        if (event.target == addClientModal) {
+            addClientModal.style.display = 'none';
+            clearClientFormErrors();
         }
     });
 });
