@@ -210,7 +210,7 @@ def getClients(request):
 
     return render(request, 'pages/clients/index.html', context)
 
-@csrf_exempt  # Ensure CSRF is handled appropriately
+@csrf_exempt
 @login_required
 @permission_required('base.add_client', raise_exception=True)
 def addClient(request):
@@ -233,7 +233,6 @@ def addClient(request):
                 return redirect(reverse('base:getClients'))
         else:
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                # Return JSON errors for AJAX
                 return JsonResponse({'errors': form.errors}, status=400)
             else:
                 messages.error(request, _("Please correct the errors below and try again."))
@@ -244,7 +243,6 @@ def addClient(request):
         'form': form,
         'title': _('Add New Client'),
     }
-
     return render(request, 'pages/clients/create.html', context)
 
 @login_required
