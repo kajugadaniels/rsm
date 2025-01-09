@@ -1,4 +1,5 @@
 from base.forms import *
+from base.models import *
 from account.models import *
 from django.urls import reverse
 from django.contrib import messages
