@@ -164,3 +164,25 @@ def editProduct(request, slug):
     }
 
     return render(request, 'pages/products/edit.html', context)
+
+@ login_required
+@ permission_required('base.delete_product', raise_exception=True)
+def deleteProduct(request, slug):
+    """
+    Delete an existing Product instance identified by its slug.
+    """
+    product = get_object_or_404(Product, slug=slug)
+    
+    if request.method == 'POST':
+        product.delete()
+        messages.success(
+            request, 
+            _("The product '%(product)s' has been deleted successfully.") % {'product': product.name}
+        )
+        return redirect(reverse('base:getProducts'))
+    
+    context = {
+        'product': product,
+    }
+
+    return render(request, 'pages/products/delete.html', context)
