@@ -336,7 +336,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const unitPrice = parseFloat(row.querySelector('.unit-price-input').value) || 0;
 
             const totalSize = size * quantity;
-            const totalPrice = size * unitPrice;
+            const totalPrice = totalSize * unitPrice;
 
             row.querySelector('.total-size-input').value = totalSize.toFixed(2);
             row.querySelector('.total-price-input').value = `RWF ${totalPrice.toFixed(2)}`;

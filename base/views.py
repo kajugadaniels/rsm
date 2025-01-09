@@ -204,31 +204,33 @@ def getClients(request):
     }
     return render(request, 'pages/clients/index.html', context)
 
+@csrf_exempt  # Ensure CSRF is handled appropriately
 @login_required
 @permission_required('base.add_client', raise_exception=True)
-@csrf_exempt  # Only if you're not using CSRF tokens in AJAX; otherwise, remove this
 def addClient(request):
     if request.method == 'POST':
         form = ClientForm(request.POST)
         if form.is_valid():
             client = form.save()
-            if request.is_ajax():
-                data = {
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                # Return JSON response for AJAX
+                return JsonResponse({
                     'id': client.id,
                     'phone_number': client.phone_number,
-                    'name': client.name,
-                }
-                return JsonResponse({'success': True, 'client': data})
-            messages.success(
-                request, 
-                _("The client '%(client)s' has been created successfully.") % {'client': client.name}
-            )
-            return redirect(reverse('base:getClients'))
+                    'name': client.name
+                })
+            else:
+                messages.success(
+                    request, 
+                    _("The client '%(client)s' has been created successfully.") % {'client': client.name}
+                )
+                return redirect(reverse('base:getClients'))
         else:
-            if request.is_ajax():
-                errors = form.errors.as_json()
-                return JsonResponse({'success': False, 'errors': errors})
-            messages.error(request, _("Please correct the errors below and try again."))
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                # Return JSON errors for AJAX
+                return JsonResponse({'errors': form.errors}, status=400)
+            else:
+                messages.error(request, _("Please correct the errors below and try again."))
     else:
         form = ClientForm()
     

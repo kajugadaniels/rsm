@@ -1,3 +1,4 @@
+{# templates/pages/orders/edit.html #}
 {% extends 'layouts/app.html' %}
 {% load static %}
 {% block content %}
@@ -21,28 +22,27 @@
                         <div class="mb-3">
                             <label class="form-label">{{ order_form.client.label }}</label>
                             <div class="input-group">
-                                <select id="client-select" name="client" class="form-select" required>
-                                    <option value="">Select a client</option>
-                                    {% for client in order_form.fields.client.queryset %}
-                                        <option value="{{ client.id }}" {% if client.id == order.client.id %}selected{% endif %}>{{ client.phone_number }} ({{ client.name }})</option>
-                                    {% endfor %}
-                                </select>
+                                <input type="text" id="client-search" class="form-control" placeholder="Search by phone number or name">
                                 <button type="button" class="btn btn-outline-secondary" id="add-client-button">Add Client</button>
                             </div>
-                            <div id="client-errors" class="text-danger">
-                                {% for error in order_form.client.errors %}
-                                    {{ error }}
+                            <select id="client-select" name="client" class="form-select mt-2" required>
+                                <option value="">Select a client</option>
+                                {% for client in order_form.fields.client.queryset %}
+                                    <option value="{{ client.id }}" {% if client.id == order.client.id %}selected{% endif %}>
+                                        {{ client.phone_number }} ({{ client.name }})
+                                    </option>
                                 {% endfor %}
-                            </div>
+                            </select>
+                            {% for error in order_form.client.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
                         </div>
                         <div class="mb-3">
                             <label class="form-label">{{ order_form.destination.label }}</label>
                             {{ order_form.destination }}
-                            <div class="text-danger">
-                                {% for error in order_form.destination.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
+                            {% for error in order_form.destination.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
                         </div>
 
                         <hr>
@@ -54,35 +54,45 @@
                                     <th>Product</th>
                                     <th>Size</th>
                                     <th>Quantity</th>
-                                    <th>Unit Price</th>
+                                    <th>Unit Price (RWF)</th>
                                     <th>Total Size</th>
-                                    <th>Total Price</th>
+                                    <th>Total Price (RWF)</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="order-products-body">
+                            <tbody>
                                 {% for form in order_product_forms %}
                                 <tr class="order-product-form" data-form-prefix="{{ forloop.counter0 }}">
                                     <td>
                                         <select name="{{ forloop.counter0 }}-product" class="form-select product-select" required>
                                             <option value="">Select a product</option>
                                             {% for product in form.fields.product.queryset %}
-                                                <option value="{{ product.id }}" {% if form.instance.product.id == product.id %}selected{% endif %}>{{ product.name }}</option>
+                                                <option value="{{ product.id }}" {% if form.instance.product.id == product.id %}selected{% endif %}>
+                                                    {{ product.name }}
+                                                </option>
                                             {% endfor %}
                                         </select>
-                                        <div class="text-danger product-error"></div>
+                                        {% for error in form.product.errors %}
+                                            <div class="text-danger">{{ error }}</div>
+                                        {% endfor %}
                                     </td>
                                     <td>
                                         <input type="number" name="{{ forloop.counter0 }}-size" class="form-control size-input" min="0" step="0.1" value="{{ form.instance.size }}" required>
-                                        <div class="text-danger size-error"></div>
+                                        {% for error in form.size.errors %}
+                                            <div class="text-danger">{{ error }}</div>
+                                        {% endfor %}
                                     </td>
                                     <td>
                                         <input type="number" name="{{ forloop.counter0 }}-quantity" class="form-control quantity-input" min="1" value="{{ form.instance.quantity }}" required>
-                                        <div class="text-danger quantity-error"></div>
+                                        {% for error in form.quantity.errors %}
+                                            <div class="text-danger">{{ error }}</div>
+                                        {% endfor %}
                                     </td>
                                     <td>
                                         <input type="number" name="{{ forloop.counter0 }}-unit_price" class="form-control unit-price-input" min="0" step="0.01" value="{{ form.instance.unit_price }}" required>
-                                        <div class="text-danger unit-price-error"></div>
+                                        {% for error in form.unit_price.errors %}
+                                            <div class="text-danger">{{ error }}</div>
+                                        {% endfor %}
                                     </td>
                                     <td>
                                         <input type="text" name="{{ forloop.counter0 }}-total_size" class="form-control total-size-input" value="{{ form.instance.total_size }}" readonly>
@@ -102,7 +112,7 @@
                         <hr>
 
                         <div class="mb-3">
-                            <label class="form-label">Grand Total:</label>
+                            <label class="form-label">Grand Total (RWF):</label>
                             <input type="text" id="grand-total" class="form-control" value="RWF {{ order.grand_total }}" readonly>
                         </div>
 
@@ -121,82 +131,160 @@
 </div>
 
 <!-- Add Client Modal -->
-<div class="modal fade" id="addClientModal" tabindex="-1" aria-labelledby="addClientModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
+<div id="add-client-modal" class="modal-overlay">
     <div class="modal-content">
-      <form id="add-client-form">
-        {% csrf_token %}
-        <div class="modal-header">
-          <h5 class="modal-title" id="addClientModalLabel">Add New Client</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-            <div id="client-form-errors" class="text-danger mb-2"></div>
+        <span class="close-button">&times;</span>
+        <h5>Add New Client</h5>
+        <form id="add-client-form">
+            {% csrf_token %}
             <div class="mb-3">
                 <label class="form-label">{{ add_client_form.name.label }}</label>
                 {{ add_client_form.name }}
+                <div class="text-danger" id="error-name"></div>
             </div>
             <div class="mb-3">
                 <label class="form-label">{{ add_client_form.phone_number.label }}</label>
                 {{ add_client_form.phone_number }}
+                <div class="text-danger" id="error-phone_number"></div>
             </div>
             <div class="mb-3">
                 <label class="form-label">{{ add_client_form.destination.label }}</label>
                 {{ add_client_form.destination }}
+                <div class="text-danger" id="error-destination"></div>
             </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary">Add Client</button>
-        </div>
-      </form>
+            <div class="text-end">
+                <button type="button" class="btn btn-secondary" id="cancel-add-client">Cancel</button>
+                <button type="submit" class="btn btn-primary">Add Client</button>
+            </div>
+        </form>
     </div>
-  </div>
 </div>
 
-{% endblock %}
+<style>
+/* Modal Overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
 
-{% block extra_js %}
+/* Modal Content */
+.modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    width: 500px;
+    max-width: 90%;
+    position: relative;
+}
+
+/* Close Button */
+.close-button {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    cursor: pointer;
+}
+</style>
+
 <script>
-// Ensure Bootstrap's JS is loaded for modal functionality
 document.addEventListener('DOMContentLoaded', function() {
     let orderProductIndex = {{ order_product_forms|length }};
 
-    // Function to update grand total
-    function updateGrandTotal() {
-        let grandTotal = 0.00;
-        document.querySelectorAll('.total-price-input').forEach(function(input) {
-            let price = parseFloat(input.value.replace('RWF ', '')) || 0.00;
-            grandTotal += price;
+    // Modal Elements
+    const addClientButton = document.getElementById('add-client-button');
+    const addClientModal = document.getElementById('add-client-modal');
+    const closeButton = document.querySelector('.close-button');
+    const cancelAddClientButton = document.getElementById('cancel-add-client');
+    const addClientForm = document.getElementById('add-client-form');
+    const clientSelect = document.getElementById('client-select');
+    const clientSearch = document.getElementById('client-search');
+
+    // Show Modal
+    addClientButton.addEventListener('click', function() {
+        addClientModal.style.display = 'flex';
+    });
+
+    // Close Modal
+    closeButton.addEventListener('click', function() {
+        addClientModal.style.display = 'none';
+        clearClientFormErrors();
+    });
+
+    cancelAddClientButton.addEventListener('click', function() {
+        addClientModal.style.display = 'none';
+        clearClientFormErrors();
+    });
+
+    // Handle Add Client Form Submission
+    addClientForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        clearClientFormErrors();
+        const formData = new FormData(addClientForm);
+
+        fetch("{% url 'base:addClient' %}", {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => { throw data; });
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Assume data contains 'id', 'phone_number', and 'name'
+            const newOption = document.createElement('option');
+            newOption.value = data.id;
+            newOption.textContent = `${data.phone_number} (${data.name})`;
+            newOption.selected = true;
+            clientSelect.appendChild(newOption);
+            addClientModal.style.display = 'none';
+            addClientForm.reset();
+        })
+        .catch(errorData => {
+            // Display errors
+            if (errorData.errors) {
+                for (const [field, errors] of Object.entries(errorData.errors)) {
+                    const errorDiv = document.getElementById(`error-${field}`);
+                    if (errorDiv) {
+                        errorDiv.textContent = errors.join(' ');
+                    }
+                }
+            } else {
+                alert('An unexpected error occurred.');
+            }
         });
-        document.getElementById('grand-total').value = 'RWF ' + grandTotal.toFixed(2);
+    });
+
+    // Clear Client Form Errors
+    function clearClientFormErrors() {
+        const errorFields = ['name', 'phone_number', 'destination'];
+        errorFields.forEach(field => {
+            const errorDiv = document.getElementById(`error-${field}`);
+            if (errorDiv) {
+                errorDiv.textContent = '';
+            }
+        });
     }
 
-    // Function to update total size and total price
-    function updateTotals(row) {
-        let sizeInput = row.querySelector('.size-input');
-        let quantityInput = row.querySelector('.quantity-input');
-        let unitPriceInput = row.querySelector('.unit-price-input');
-        let totalSizeInput = row.querySelector('.total-size-input');
-        let totalPriceInput = row.querySelector('.total-price-input');
+    // Add Order Product Row
+    const addOrderProductButton = document.getElementById('add-order-product');
+    const orderProductsTable = document.getElementById('order-products-table').getElementsByTagName('tbody')[0];
 
-        let size = parseFloat(sizeInput.value) || 0.00;
-        let quantity = parseInt(quantityInput.value) || 0;
-        let unitPrice = parseFloat(unitPriceInput.value) || 0.00;
-
-        let totalSize = size * quantity;
-        let totalPrice = size * unitPrice;
-
-        totalSizeInput.value = totalSize.toFixed(2);
-        totalPriceInput.value = 'RWF ' + totalPrice.toFixed(2);
-
-        updateGrandTotal();
-    }
-
-    // Add new order product row
-    document.getElementById('add-order-product').addEventListener('click', function() {
-        let tableBody = document.getElementById('order-products-body');
-        let newRow = document.createElement('tr');
+    addOrderProductButton.addEventListener('click', function() {
+        const newRow = document.createElement('tr');
         newRow.classList.add('order-product-form');
         newRow.setAttribute('data-form-prefix', orderProductIndex);
 
@@ -208,19 +296,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         <option value="{{ product.id }}">{{ product.name }}</option>
                     {% endfor %}
                 </select>
-                <div class="text-danger product-error"></div>
             </td>
             <td>
                 <input type="number" name="${orderProductIndex}-size" class="form-control size-input" min="0" step="0.1" required>
-                <div class="text-danger size-error"></div>
             </td>
             <td>
                 <input type="number" name="${orderProductIndex}-quantity" class="form-control quantity-input" min="1" required>
-                <div class="text-danger quantity-error"></div>
             </td>
             <td>
                 <input type="number" name="${orderProductIndex}-unit_price" class="form-control unit-price-input" min="0" step="0.01" required>
-                <div class="text-danger unit-price-error"></div>
             </td>
             <td>
                 <input type="text" name="${orderProductIndex}-total_size" class="form-control total-size-input" readonly>
@@ -232,83 +316,64 @@ document.addEventListener('DOMContentLoaded', function() {
                 <button type="button" class="btn btn-danger remove-order-product">Remove</button>
             </td>
         `;
-        tableBody.appendChild(newRow);
+        orderProductsTable.appendChild(newRow);
         orderProductIndex++;
     });
 
-    // Remove order product row
-    document.getElementById('order-products-table').addEventListener('click', function(e) {
+    // Remove Order Product Row
+    orderProductsTable.addEventListener('click', function(e) {
         if (e.target && e.target.matches('button.remove-order-product')) {
-            let row = e.target.closest('tr');
-            row.parentNode.removeChild(row);
+            const rows = orderProductsTable.getElementsByTagName('tr');
+            if (rows.length > 1) {
+                e.target.closest('tr').remove();
+                updateGrandTotal();
+            } else {
+                alert('At least one product must be present in the order.');
+            }
+        }
+    });
+
+    // Handle Live Calculations
+    orderProductsTable.addEventListener('input', function(e) {
+        if (e.target && (e.target.matches('.size-input') || e.target.matches('.quantity-input') || e.target.matches('.unit-price-input'))) {
+            const row = e.target.closest('tr');
+            const size = parseFloat(row.querySelector('.size-input').value) || 0;
+            const quantity = parseInt(row.querySelector('.quantity-input').value) || 0;
+            const unitPrice = parseFloat(row.querySelector('.unit-price-input').value) || 0;
+
+            const totalSize = size * quantity;
+            const totalPrice = totalSize * unitPrice;
+
+            row.querySelector('.total-size-input').value = totalSize.toFixed(2);
+            row.querySelector('.total-price-input').value = `RWF ${totalPrice.toFixed(2)}`;
+
             updateGrandTotal();
         }
     });
 
-    // Update totals on input change
-    document.getElementById('order-products-table').addEventListener('input', function(e) {
-        if (e.target && (e.target.matches('.size-input') || e.target.matches('.quantity-input') || e.target.matches('.unit-price-input'))) {
-            let row = e.target.closest('tr');
-            updateTotals(row);
-        }
-    });
-
-    // Handle Add Client button click to open modal
-    document.getElementById('add-client-button').addEventListener('click', function() {
-        let addClientModal = new bootstrap.Modal(document.getElementById('addClientModal'));
-        addClientModal.show();
-    });
-
-    // Handle Add Client form submission via Fetch API
-    document.getElementById('add-client-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        let form = e.target;
-        let formData = new FormData(form);
-
-        fetch("{% url 'base:addClient' %}", {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-            },
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Close the modal
-                let addClientModal = bootstrap.Modal.getInstance(document.getElementById('addClientModal'));
-                addClientModal.hide();
-
-                // Reset the form
-                form.reset();
-                document.getElementById('client-form-errors').innerHTML = '';
-
-                // Add the new client to the client-select dropdown
-                let clientSelect = document.getElementById('client-select');
-                let newOption = document.createElement('option');
-                newOption.value = data.client.id;
-                newOption.textContent = `${data.client.phone_number} (${data.client.name})`;
-                newOption.selected = true;
-                clientSelect.appendChild(newOption);
-
-                // Optionally, show a success message
-                alert('Client added successfully!');
-            } else {
-                // Display errors
-                let errors = JSON.parse(data.errors);
-                let errorHtml = '';
-                for (let field in errors) {
-                    errors[field].forEach(error => {
-                        errorHtml += `<p>${error.message}</p>`;
-                    });
-                }
-                document.getElementById('client-form-errors').innerHTML = errorHtml;
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An unexpected error occurred while adding the client.');
+    // Update Grand Total
+    function updateGrandTotal() {
+        let grandTotal = 0.00;
+        const totalPriceInputs = document.querySelectorAll('.total-price-input');
+        totalPriceInputs.forEach(function(input) {
+            const price = parseFloat(input.value.replace('RWF ', '')) || 0.00;
+            grandTotal += price;
         });
+        document.getElementById('grand-total').value = `RWF ${grandTotal.toFixed(2)}`;
+    }
+
+    // Client Search Functionality
+    clientSearch.addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        const options = clientSelect.options;
+        for (let i = 1; i < options.length; i++) { // Start from 1 to skip the placeholder
+            const optionText = options[i].text.toLowerCase();
+            if (optionText.includes(query)) {
+                options[i].style.display = '';
+            } else {
+                options[i].style.display = 'none';
+            }
+        }
     });
 });
 </script>
