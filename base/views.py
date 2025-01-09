@@ -306,19 +306,18 @@ def getOrders(request):
 def addOrder(request):
     if request.method == 'POST':
         order_form = OrderForm(request.POST)
-        order_product_forms = [OrderProductForm(request.POST, prefix=str(x)) for x in range(0, int(request.POST.get('form-TOTAL_FORMS', 1)))]
-        
-        if order_form.is_valid() and all([form.is_valid() for form in order_product_forms]):
+        formset = OrderProductFormSet(request.POST, prefix='order_products')
+
+        if order_form.is_valid() and formset.is_valid():
             order = order_form.save(commit=False)
             order.addedBy = request.user
-            order.updatedBy = request.user
             order.save()
-            
-            for form in order_product_forms:
+
+            for form in formset:
                 order_product = form.save(commit=False)
                 order_product.order = order
                 order_product.save()
-            
+
             messages.success(
                 request, 
                 _("The order '%(order)s' has been created successfully.") % {'order': order.orderId}
@@ -328,11 +327,11 @@ def addOrder(request):
             messages.error(request, _("Please correct the errors below and try again."))
     else:
         order_form = OrderForm()
-        order_product_forms = [OrderProductForm(prefix='0')]
-    
+        formset = OrderProductFormSet(prefix='order_products')
+
     context = {
         'order_form': order_form,
-        'order_product_forms': order_product_forms,
+        'formset': formset,
         'title': _('Add New Order'),
     }
     return render(request, 'pages/orders/create.html', context)
