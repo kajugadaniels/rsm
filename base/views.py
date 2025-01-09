@@ -70,3 +70,22 @@ def editRole(request, slug):
     }
 
     return render(request, 'pages/roles/edit.html', context)
+
+@login_required
+@permission_required('account.delete_role', raise_exception=True)
+def deleteRole(request, slug):
+    """
+    Delete an existing Role instance identified by its slug.
+    """
+    role = get_object_or_404(Role, slug=slug)
+    
+    if request.method == 'POST':
+        role.delete()
+        messages.success(request, _("The role '%(role)s' has been deleted successfully.") % {'role': role.name})
+        return redirect(reverse('auth:getRoles'))
+    
+    context = {
+        'role': role,
+    }
+
+    return render(request, 'pages/roles/delete.html', context)
