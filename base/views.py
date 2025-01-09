@@ -14,7 +14,7 @@ def getRoles(request):
     """
     Retrieve and display all Role instances.
     """
-    roles = Role.objects.all().order_by('-created_at')
+    roles = Role.objects.all().order_by('-id')
     context = {
         'roles': roles,
     }
