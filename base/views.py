@@ -135,3 +135,32 @@ def addProduct(request):
         'title': _('Add New Product'),
     }
     return render(request, 'pages/products/create.html', context)
+
+@ login_required
+@ permission_required('base.change_product', raise_exception=True)
+def editProduct(request, slug):
+    """
+    Edit an existing Product instance identified by its slug.
+    """
+    product = get_object_or_404(Product, slug=slug)
+    
+    if request.method == 'POST':
+        form = ProductForm(request.POST, instance=product)
+        if form.is_valid():
+            product = form.save()
+            messages.success(
+                request, 
+                _("The product '%(product)s' has been updated successfully.") % {'product': product.name}
+            )
+            return redirect(reverse('base:getProducts'))
+        else:
+            messages.error(request, _("Please correct the errors below and try again."))
+    else:
+        form = ProductForm(instance=product)
+    
+    context = {
+        'form': form,
+        'title': _('Edit Product: %(product)s') % {'product': product.name},
+    }
+
+    return render(request, 'pages/products/edit.html', context)
