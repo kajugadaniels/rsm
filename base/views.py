@@ -24,6 +24,7 @@ def getRoles(request):
     context = {
         'roles': roles,
     }
+
     return render(request, 'pages/roles/index.html', context)
 
 @login_required
@@ -50,6 +51,7 @@ def addRole(request):
         'form': form,
         'title': _('Add New Role'),
     }
+
     return render(request, 'pages/roles/create.html', context)
 
 @login_required
@@ -113,6 +115,7 @@ def getProducts(request):
     context = {
         'products': products,
     }
+
     return render(request, 'pages/products/index.html', context)
 
 @ login_required
@@ -139,6 +142,7 @@ def addProduct(request):
         'form': form,
         'title': _('Add New Product'),
     }
+
     return render(request, 'pages/products/create.html', context)
 
 @ login_required
@@ -202,6 +206,7 @@ def getClients(request):
     context = {
         'clients': clients,
     }
+
     return render(request, 'pages/clients/index.html', context)
 
 @csrf_exempt  # Ensure CSRF is handled appropriately
@@ -238,6 +243,7 @@ def addClient(request):
         'form': form,
         'title': _('Add New Client'),
     }
+
     return render(request, 'pages/clients/create.html', context)
 
 @login_required
@@ -298,6 +304,7 @@ def getOrders(request):
     context = {
         'orders': orders,
     }
+
     return render(request, 'pages/orders/index.html', context)
 
 @login_required
@@ -334,6 +341,7 @@ def addOrder(request):
         'formset': formset,
         'title': _('Add New Order'),
     }
+
     return render(request, 'pages/orders/create.html', context)
 
 @login_required
@@ -342,21 +350,30 @@ def addOrder(request):
 def editOrder(request, orderId):
     order = get_object_or_404(Order, orderId=orderId)
     order_products = order.order_products.all()
-    
+    initial_data = [{
+        'product': op.product,
+        'size': op.size,
+        'quantity': op.quantity,
+        'unit_price': op.unit_price,
+    } for op in order_products]
+
     if request.method == 'POST':
         order_form = OrderForm(request.POST, instance=order)
-        order_product_forms = [OrderProductForm(request.POST, instance=op, prefix=str(x)) for x, op in enumerate(order_products)]
-        
-        if order_form.is_valid() and all([form.is_valid() for form in order_product_forms]):
+        formset = OrderProductFormSet(request.POST, prefix='order_products')
+
+        if order_form.is_valid() and formset.is_valid():
             order = order_form.save(commit=False)
             order.updatedBy = request.user
             order.save()
-            
-            for form in order_product_forms:
+
+            # Delete existing OrderProducts
+            order.order_products.all().delete()
+
+            for form in formset:
                 order_product = form.save(commit=False)
                 order_product.order = order
                 order_product.save()
-            
+
             messages.success(
                 request, 
                 _("The order '%(order)s' has been updated successfully.") % {'order': order.orderId}
@@ -366,11 +383,11 @@ def editOrder(request, orderId):
             messages.error(request, _("Please correct the errors below and try again."))
     else:
         order_form = OrderForm(instance=order)
-        order_product_forms = [OrderProductForm(instance=op, prefix=str(x)) for x, op in enumerate(order_products)]
-    
+        formset = OrderProductFormSet(initial=initial_data, prefix='order_products')
+
     context = {
         'order_form': order_form,
-        'order_product_forms': order_product_forms,
+        'formset': formset,
         'order': order,
         'title': _('Edit Order: %(order)s') % {'order': order.orderId},
     }
