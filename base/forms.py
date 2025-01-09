@@ -41,5 +41,7 @@ class RoleForm(forms.ModelForm):
     def clean_name(self):
         name = self.cleaned_data.get('name')
         if Role.objects.filter(name__iexact=name).exclude(pk=self.instance.pk).exists():
-            raise forms.ValidationError(_('A role with this name already exists. Please choose a different name.'))
+            raise forms.ValidationError(
+                _('A role with this name already exists. Please choose a different name.')
+            )
         return name
