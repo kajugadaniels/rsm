@@ -43,3 +43,30 @@ def addRole(request):
         'title': _('Add New Role'),
     }
     return render(request, 'pages/roles/create.html', context)
+
+@login_required
+@permission_required('account.change_role', raise_exception=True)
+def editRole(request, slug):
+    """
+    Edit an existing Role instance identified by its slug.
+    """
+    role = get_object_or_404(Role, slug=slug)
+    
+    if request.method == 'POST':
+        form = RoleForm(request.POST, instance=role)
+        if form.is_valid():
+            role = form.save()
+            form.save_m2m()
+            messages.success(request, _("The role '%(role)s' has been updated successfully.") % {'role': role.name})
+            return redirect(reverse('auth:getRoles'))
+        else:
+            messages.error(request, _("Please correct the errors below and try again."))
+    else:
+        form = RoleForm(instance=role)
+    
+    context = {
+        'form': form,
+        'title': _('Edit Role: %(role)s') % {'role': role.name},
+    }
+
+    return render(request, 'pages/roles/edit.html', context)
