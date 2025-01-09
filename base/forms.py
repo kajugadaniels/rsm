@@ -77,3 +77,54 @@ class ProductForm(forms.ModelForm):
         if Product.objects.filter(name__iexact=name).exclude(pk=self.instance.pk).exists():
             raise forms.ValidationError(_('A product with this name already exists. Please choose a different name.'))
         return name
+
+class ClientForm(forms.ModelForm):
+    """
+    Form for creating and updating Client instances.
+    """
+    class Meta:
+        model = Client
+        fields = ['name', 'phone_number', 'destination']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter client name',
+                'required': 'required',
+            }),
+            'phone_number': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter phone number',
+                'required': 'required',
+            }),
+            'destination': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter destination',
+                'required': 'required',
+            }),
+        }
+        labels = {
+            'name': _('Client Name'),
+            'phone_number': _('Phone Number'),
+            'destination': _('Destination'),
+        }
+        error_messages = {
+            'name': {
+                'required': _('Please enter the client name.'),
+                'max_length': _('Client name cannot exceed 255 characters.'),
+            },
+            'phone_number': {
+                'required': _('Please enter the phone number.'),
+                'unique': _('This phone number is already in use. Please use a different one.'),
+                'max_length': _('Phone number cannot exceed 15 characters.'),
+            },
+            'destination': {
+                'required': _('Please enter the destination.'),
+                'max_length': _('Destination cannot exceed 255 characters.'),
+            },
+        }
+
+    def clean_phone_number(self):
+        phone_number = self.cleaned_data.get('phone_number')
+        if Client.objects.filter(phone_number=phone_number).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError(_('This phone number is already in use. Please use a different one.'))
+        return phone_number
