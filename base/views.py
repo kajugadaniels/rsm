@@ -323,3 +323,44 @@ def addOrder(request):
         'title': _('Add New Order'),
     }
     return render(request, 'pages/orders/create.html', context)
+
+@login_required
+@permission_required('base.change_order', raise_exception=True)
+@transaction.atomic
+def editOrder(request, orderId):
+    order = get_object_or_404(Order, orderId=orderId)
+    order_products = order.order_products.all()
+    
+    if request.method == 'POST':
+        order_form = OrderForm(request.POST, instance=order)
+        order_product_forms = [OrderProductForm(request.POST, instance=op, prefix=str(x)) for x, op in enumerate(order_products)]
+        
+        if order_form.is_valid() and all([form.is_valid() for form in order_product_forms]):
+            order = order_form.save(commit=False)
+            order.updatedBy = request.user
+            order.save()
+            
+            for form in order_product_forms:
+                order_product = form.save(commit=False)
+                order_product.order = order
+                order_product.save()
+            
+            messages.success(
+                request, 
+                _("The order '%(order)s' has been updated successfully.") % {'order': order.orderId}
+            )
+            return redirect(reverse('base:getOrders'))
+        else:
+            messages.error(request, _("Please correct the errors below and try again."))
+    else:
+        order_form = OrderForm(instance=order)
+        order_product_forms = [OrderProductForm(instance=op, prefix=str(x)) for x, op in enumerate(order_products)]
+    
+    context = {
+        'order_form': order_form,
+        'order_product_forms': order_product_forms,
+        'order': order,
+        'title': _('Edit Order: %(order)s') % {'order': order.orderId},
+    }
+
+    return render(request, 'pages/orders/edit.html', context)
