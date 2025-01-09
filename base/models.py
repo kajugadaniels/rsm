@@ -98,11 +98,11 @@ class Order(models.Model):
 class OrderProduct(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_products')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    size = models.FloatField()
+    size = models.PositiveIntegerField()
     quantity = models.PositiveIntegerField()
-    total_size = models.FloatField(editable=False)
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
-    total_price = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
+    total_size = models.PositiveIntegerField(editable=False)
+    unit_price = models.PositiveIntegerField()
+    total_price = models.PositiveIntegerField(editable=False)
 
     def __str__(self):
         return f"{self.product.name} x {self.quantity} for {self.order.orderId}"
