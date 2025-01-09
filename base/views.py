@@ -224,3 +224,32 @@ def addClient(request):
         'title': _('Add New Client'),
     }
     return render(request, 'pages/clients/create.html', context)
+
+@login_required
+@permission_required('base.change_client', raise_exception=True)
+def editClient(request, id):
+    """
+    Edit an existing Client instance identified by its ID.
+    """
+    client = get_object_or_404(Client, id=id)
+    
+    if request.method == 'POST':
+        form = ClientForm(request.POST, instance=client)
+        if form.is_valid():
+            client = form.save()
+            messages.success(
+                request, 
+                _("The client '%(client)s' has been updated successfully.") % {'client': client.name}
+            )
+            return redirect(reverse('base:getClients'))
+        else:
+            messages.error(request, _("Please correct the errors below and try again."))
+    else:
+        form = ClientForm(instance=client)
+    
+    context = {
+        'form': form,
+        'title': _('Edit Client: %(client)s') % {'client': client.name},
+    }
+
+    return render(request, 'pages/clients/edit.html', context)
