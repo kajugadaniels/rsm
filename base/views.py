@@ -210,6 +210,102 @@ def getClients(request):
 
     return render(request, 'pages/clients/index.html', context)
 
+@csrf_exempt
+@login_required
+@permission_required('base.add_client', raise_exception=True)
+def addClient(request):
+    if request.method == 'POST':
+        form = ClientForm(request.POST)
+        if form.is_valid():
+            client = form.save()
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                # Return JSON response for AJAX
+                return JsonResponse({
+                    'id': client.id,
+                    'phone_number': client.phone_number,
+                    'name': client.name
+                })
+            else:
+                messages.success(
+                    request, 
+                    _("The client '%(client)s' has been created successfully.") % {'client': client.name}
+                )
+                return redirect(reverse('base:getClients'))
+        else:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'errors': form.errors}, status=400)
+            else:
+                messages.error(request, _("Please correct the errors below and try again."))
+    else:
+        form = ClientForm()
+    
+    context = {
+        'form': form,
+        'title': _('Add New Client'),
+    }
+    return render(request, 'pages/clients/create.html', context)
+
+@login_required
+@permission_required('base.change_client', raise_exception=True)
+def editClient(request, id):
+    """
+    Edit an existing Client instance identified by its ID.
+    """
+    client = get_object_or_404(Client, id=id)
+    
+    if request.method == 'POST':
+        form = ClientForm(request.POST, instance=client)
+        if form.is_valid():
+            client = form.save()
+            messages.success(
+                request, 
+                _("The client '%(client)s' has been updated successfully.") % {'client': client.name}
+            )
+            return redirect(reverse('base:getClients'))
+        else:
+            messages.error(request, _("Please correct the errors below and try again."))
+    else:
+        form = ClientForm(instance=client)
+    
+    context = {
+        'form': form,
+        'title': _('Edit Client: %(client)s') % {'client': client.name},
+    }
+
+    return render(request, 'pages/clients/edit.html', context)
+
+@login_required
+@permission_required('base.delete_client', raise_exception=True)
+def deleteClient(request, id):
+    """
+    Delete an existing Client instance identified by its ID.
+    """
+    client = get_object_or_404(Client, id=id)
+    
+    if request.method == 'POST':
+        client.delete()
+        messages.success(
+            request, 
+            _("The client '%(client)s' has been deleted successfully.") % {'client': client.name}
+        )
+        return redirect(reverse('base:getClients'))
+    
+    context = {
+        'client': client,
+    }
+
+    return render(request, 'pages/clients/delete.html', context)
+
+@login_required
+@permission_required('base.view_order', raise_exception=True)
+def getOrders(request):
+    orders = Order.objects.all().order_by('-created_at')
+    context = {
+        'orders': orders,
+    }
+
+    return render(request, 'pages/orders/index.html', context)
+
 @login_required
 @permission_required('base.add_order', raise_exception=True)
 @transaction.atomic
@@ -332,132 +428,6 @@ def editOrder(request, orderId):
                 return redirect(reverse('base:getOrders'))
             else:
                 messages.error(request, _("Please correct the errors below and try again."))
-    else:
-        order_form = OrderForm(instance=order)
-        order_product_forms = [OrderProductForm(instance=op, prefix=str(x)) for x, op in enumerate(order_products)]
-    
-    context = {
-        'order_form': order_form,
-        'order_product_forms': order_product_forms,
-        'order': order,
-        'title': _('Edit Order: %(order)s') % {'order': order.orderId},
-    }
-
-    return render(request, 'pages/orders/edit.html', context)
-
-@login_required
-@permission_required('base.delete_client', raise_exception=True)
-def deleteClient(request, id):
-    """
-    Delete an existing Client instance identified by its ID.
-    """
-    client = get_object_or_404(Client, id=id)
-    
-    if request.method == 'POST':
-        client.delete()
-        messages.success(
-            request, 
-            _("The client '%(client)s' has been deleted successfully.") % {'client': client.name}
-        )
-        return redirect(reverse('base:getClients'))
-    
-    context = {
-        'client': client,
-    }
-
-    return render(request, 'pages/clients/delete.html', context)
-
-@login_required
-@permission_required('base.view_order', raise_exception=True)
-def getOrders(request):
-    orders = Order.objects.all().order_by('-created_at')
-    context = {
-        'orders': orders,
-    }
-
-    return render(request, 'pages/orders/index.html', context)
-
-@login_required
-@permission_required('base.add_order', raise_exception=True)
-@transaction.atomic
-def addOrder(request):
-    if request.method == 'POST':
-        order_form = OrderForm(request.POST)
-        
-        # Dynamically find all unique prefixes for OrderProduct forms
-        prefixes = set()
-        pattern = re.compile(r'^(\d+)-')
-        for key in request.POST.keys():
-            match = pattern.match(key)
-            if match:
-                prefixes.add(match.group(1))
-        order_product_forms = [OrderProductForm(request.POST, prefix=prefix) for prefix in sorted(prefixes)]
-        
-        if order_form.is_valid() and all([form.is_valid() for form in order_product_forms]):
-            order = order_form.save(commit=False)
-            order.addedBy = request.user
-            order.save()
-            
-            for form in order_product_forms:
-                order_product = form.save(commit=False)
-                order_product.order = order
-                order_product.save()
-            
-            messages.success(
-                request, 
-                _("The order '%(order)s' has been created successfully.") % {'order': order.orderId}
-            )
-            return redirect(reverse('base:getOrders'))
-        else:
-            messages.error(request, _("Please correct the errors below and try again."))
-    else:
-        order_form = OrderForm()
-        order_product_forms = [OrderProductForm(prefix='0')]
-    
-    context = {
-        'order_form': order_form,
-        'order_product_forms': order_product_forms,
-        'title': _('Add New Order'),
-    }
-    return render(request, 'pages/orders/create.html', context)
-
-@login_required
-@permission_required('base.change_order', raise_exception=True)
-@transaction.atomic
-def editOrder(request, orderId):
-    order = get_object_or_404(Order, orderId=orderId)
-    order_products = order.order_products.all()
-    
-    if request.method == 'POST':
-        order_form = OrderForm(request.POST, instance=order)
-        
-        # Dynamically find all unique prefixes for OrderProduct forms
-        prefixes = set()
-        pattern = re.compile(r'^(\d+)-')
-        for key in request.POST.keys():
-            match = pattern.match(key)
-            if match:
-                prefixes.add(match.group(1))
-        order_product_forms = [OrderProductForm(request.POST, instance=op, prefix=prefix) 
-                               for prefix, op in zip(sorted(prefixes), order_products)]
-        
-        if order_form.is_valid() and all([form.is_valid() for form in order_product_forms]):
-            order = order_form.save(commit=False)
-            order.updatedBy = request.user
-            order.save()
-            
-            for form in order_product_forms:
-                order_product = form.save(commit=False)
-                order_product.order = order
-                order_product.save()
-            
-            messages.success(
-                request, 
-                _("The order '%(order)s' has been updated successfully.") % {'order': order.orderId}
-            )
-            return redirect(reverse('base:getOrders'))
-        else:
-            messages.error(request, _("Please correct the errors below and try again."))
     else:
         order_form = OrderForm(instance=order)
         order_product_forms = [OrderProductForm(instance=op, prefix=str(x)) for x, op in enumerate(order_products)]
