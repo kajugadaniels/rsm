@@ -327,7 +327,6 @@ def addOrder(request):
         if order_form.is_valid() and all([form.is_valid() for form in order_product_forms]):
             order = order_form.save(commit=False)
             order.addedBy = request.user
-            order.updatedBy = request.user
             order.save()
             
             for form in order_product_forms:
