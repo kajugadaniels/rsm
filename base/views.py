@@ -276,3 +276,12 @@ def deleteClient(request, id):
     }
 
     return render(request, 'pages/clients/delete.html', context)
+
+@login_required
+@permission_required('base.view_order', raise_exception=True)
+def getOrders(request):
+    orders = Order.objects.all().order_by('-created_at')
+    context = {
+        'orders': orders,
+    }
+    return render(request, 'pages/orders/index.html', context)
