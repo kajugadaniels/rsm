@@ -1,6 +1,7 @@
 from django import forms
 from base.models import *
 from account.models import *
+from django.forms import formset_factory
 from django.contrib.auth.models import Permission
 from django.utils.translation import gettext_lazy as _
 
@@ -213,3 +214,6 @@ class OrderProductForm(forms.ModelForm):
         if not Product.objects.filter(id=product.id).exists():
             raise forms.ValidationError(_('Selected product does not exist.'))
         return product
+
+# Define the formset
+OrderProductFormSet = formset_factory(OrderProductForm, extra=1, min_num=1, validate_min=True)
