@@ -37,7 +37,7 @@
                                     <td>{{ order.orderId }}</td>
                                     <td>{{ order.client.phone_number }} ({{ order.client.name }})</td>
                                     <td>{{ order.destination }}</td>
-                                    <td>{{ order.grand_total }} RWF</td>
+                                    <td>{{ order.grand_total|intcomma }} RWF</td>
                                     <td>{{ order.created_at|naturaltime }}</td>
                                     <td>
                                         <div class="order-action">
