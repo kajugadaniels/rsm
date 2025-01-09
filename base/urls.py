@@ -12,4 +12,9 @@ urlpatterns = [
     path('role/add/', addRole, name="addRole"),
     path('role/edit/<slug>/', editRole, name="editRole"),
     path('role/delete/<slug>/', deleteRole, name="deleteRole"),
-]  + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+    path('products/', getProducts, name="getProducts"),
+    path('product/add/', addProduct, name="addProduct"),
+    path('product/edit/<slug>/', editProduct, name="editProduct"),
+    path('product/delete/<slug>/', deleteProduct, name="deleteProduct"),
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
