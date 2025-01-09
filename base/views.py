@@ -186,3 +186,15 @@ def deleteProduct(request, slug):
     }
 
     return render(request, 'pages/products/delete.html', context)
+
+@login_required
+@permission_required('base.view_client', raise_exception=True)
+def getClients(request):
+    """
+    Retrieve and display all Client instances.
+    """
+    clients = Client.objects.all().order_by('-created_at')
+    context = {
+        'clients': clients,
+    }
+    return render(request, 'pages/clients/index.html', context)
