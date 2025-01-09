@@ -33,7 +33,7 @@ def addRole(request):
             role = form.save()
             form.save_m2m()  # Save the many-to-many data for permissions
             messages.success(request, _("The role '%(role)s' has been created successfully.") % {'role': role.name})
-            return redirect(reverse('auth:getRoles'))
+            return redirect(reverse('base:getRoles'))
         else:
             messages.error(request, _("Please correct the errors below and try again."))
     else:
@@ -59,7 +59,7 @@ def editRole(request, slug):
             role = form.save()
             form.save_m2m()
             messages.success(request, _("The role '%(role)s' has been updated successfully.") % {'role': role.name})
-            return redirect(reverse('auth:getRoles'))
+            return redirect(reverse('base:getRoles'))
         else:
             messages.error(request, _("Please correct the errors below and try again."))
     else:
@@ -83,7 +83,7 @@ def deleteRole(request, slug):
     if request.method == 'POST':
         role.delete()
         messages.success(request, _("The role '%(role)s' has been deleted successfully.") % {'role': role.name})
-        return redirect(reverse('auth:getRoles'))
+        return redirect(reverse('base:getRoles'))
     
     context = {
         'role': role,
