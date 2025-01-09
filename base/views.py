@@ -97,3 +97,15 @@ def deleteRole(request, slug):
     }
 
     return render(request, 'pages/roles/delete.html', context)
+
+@ login_required
+@ permission_required('base.view_product', raise_exception=True)
+def getProducts(request):
+    """
+    Retrieve and display all Product instances.
+    """
+    products = Product.objects.all().order_by('-created_at')
+    context = {
+        'products': products,
+    }
+    return render(request, 'pages/products/index.html', context)
