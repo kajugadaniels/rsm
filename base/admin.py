@@ -59,3 +59,57 @@ class ProductAdmin(admin.ModelAdmin):
 
         self.message_user(request, _("Selected products have been exported as CSV."))
 
+@admin.register(Client)
+class ClientAdmin(admin.ModelAdmin):
+    """
+    Admin interface for Client model.
+    """
+    list_display = ('name', 'phone_number', 'destination', 'created_at', 'updated_at', 'action_links')
+    search_fields = ('name', 'phone_number', 'destination')
+    list_filter = ('created_at', 'updated_at', 'destination')
+    readonly_fields = ('created_at', 'updated_at')
+
+    fieldsets = (
+        (None, {
+            'fields': ('name', 'phone_number', 'destination')
+        }),
+        (_('Timestamps'), {
+            'fields': ('created_at', 'updated_at'),
+        }),
+    )
+
+    actions = ['export_as_csv']
+
+    def action_links(self, obj):
+        """
+        Provides direct links to edit and delete the Client instance.
+        """
+        edit_url = f'/admin/base/client/{obj.id}/change/'
+        delete_url = f'/admin/base/client/{obj.id}/delete/'
+        return format_html(
+            '<a class="button" href="{}">Edit</a> | '
+            '<a class="button" href="{}">Delete</a>',
+            edit_url,
+            delete_url,
+        )
+    action_links.short_description = 'Actions'
+    action_links.allow_tags = True
+
+    @admin.action(description='Export selected clients as CSV')
+    def export_as_csv(self, request, queryset):
+        """
+        Exports selected Client instances as a CSV file.
+        """
+        import csv
+        from django.http import HttpResponse
+
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename=clients.csv'
+
+        writer = csv.writer(response)
+        writer.writerow(['Name', 'Phone Number', 'Destination', 'Created At', 'Updated At'])
+
+        for client in queryset:
+            writer.writerow([client.name, client.phone_number, client.destination, client.created_at, client.updated_at])
+
+        self.message_user(request, _("Selected clients have been exported as CSV."))
