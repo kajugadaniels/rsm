@@ -109,3 +109,29 @@ def getProducts(request):
         'products': products,
     }
     return render(request, 'pages/products/index.html', context)
+
+@ login_required
+@ permission_required('base.add_product', raise_exception=True)
+def addProduct(request):
+    """
+    Create a new Product instance.
+    """
+    if request.method == 'POST':
+        form = ProductForm(request.POST)
+        if form.is_valid():
+            product = form.save()
+            messages.success(
+                request, 
+                _("The product '%(product)s' has been created successfully.") % {'product': product.name}
+            )
+            return redirect(reverse('base:getProducts'))
+        else:
+            messages.error(request, _("Please correct the errors below and try again."))
+    else:
+        form = ProductForm()
+    
+    context = {
+        'form': form,
+        'title': _('Add New Product'),
+    }
+    return render(request, 'pages/products/create.html', context)
