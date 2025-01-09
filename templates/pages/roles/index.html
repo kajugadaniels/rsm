@@ -55,10 +55,10 @@
                                     <td><p class="f-light">{{ role.updated_at|naturaltime }}</p></td>
                                     <td>
                                         <div class="role-action">
-                                            <a href="{% url 'auth:editRole' role.slug %}" class="btn btn-primary">
+                                            <a href="{% url 'base:editRole' role.slug %}" class="btn btn-primary">
                                                 Edit
                                             </a>
-                                            <a href="{% url 'auth:deleteRole' role.slug %}" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete the role \'{{ role.name }}\'?');">
+                                            <a href="{% url 'base:deleteRole' role.slug %}" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete the role \'{{ role.name }}\'?');">
                                                 Delete
                                             </a>
                                         </div>

@@ -15,9 +15,15 @@ def user_image_path(instance, filename):
 class Role(models.Model):
     name = models.CharField(max_length=30, unique=True)
     permissions = models.ManyToManyField(Permission, blank=True)
+    slug = models.SlugField(unique=True, max_length=255, null=True, blank=True)
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super(Role, self).save(*args, **kwargs)
 
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
