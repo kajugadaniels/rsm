@@ -128,3 +128,31 @@ class ClientForm(forms.ModelForm):
         if Client.objects.filter(phone_number=phone_number).exclude(pk=self.instance.pk).exists():
             raise forms.ValidationError(_('This phone number is already in use. Please use a different one.'))
         return phone_number
+
+class OrderForm(forms.ModelForm):
+    class Meta:
+        model = Order
+        fields = ['client', 'destination']
+        widgets = {
+            'client': forms.Select(attrs={
+                'class': 'form-control',
+                'id': 'client-select',
+                'required': 'required',
+            }),
+            'destination': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter destination',
+            }),
+        }
+        labels = {
+            'client': _('Client'),
+            'destination': _('Destination'),
+        }
+        error_messages = {
+            'client': {
+                'required': _('Please select a client.'),
+            },
+            'destination': {
+                'max_length': _('Destination cannot exceed 255 characters.'),
+            },
+        }
