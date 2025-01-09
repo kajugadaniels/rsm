@@ -28,4 +28,5 @@ urlpatterns = [
     path('order/edit/<str:orderId>/', editOrder, name="editOrder"),
     path('order/delete/<str:orderId>/', deleteOrder, name="deleteOrder"),
     path('order/<str:orderId>/', showOrder, name="showOrder"),
+    path('order-product/delete/<int:id>/', deleteOrderProduct, name='deleteOrderProduct'),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
