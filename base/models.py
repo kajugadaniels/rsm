@@ -29,3 +29,16 @@ class Product(models.Model):
             slug = f"{base_slug}-{counter}"
             counter += 1
         return slug
+
+class Client(models.Model):
+    name = models.CharField(max_length=255)
+    phone_number = models.CharField(max_length=15, unique=True)
+    destination = models.CharField(max_length=255)
+    created_at = models.DateTimeField(default=timezone.now, editable=False)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.phone_number})"
+
+    def save(self, *args, **kwargs):
+        super(Client, self).save(*args, **kwargs)
