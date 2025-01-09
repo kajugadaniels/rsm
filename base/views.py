@@ -383,3 +383,16 @@ def deleteOrder(request, orderId):
     }
 
     return render(request, 'pages/orders/delete.html', context)
+
+@login_required
+@permission_required('base.view_order', raise_exception=True)
+def showOrder(request, orderId):
+    order = get_object_or_404(Order, orderId=orderId)
+    order_products = order.order_products.all()
+    
+    context = {
+        'order': order,
+        'order_products': order_products,
+    }
+
+    return render(request, 'pages/orders/show.html', context)
