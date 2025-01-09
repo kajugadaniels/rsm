@@ -198,3 +198,29 @@ def getClients(request):
         'clients': clients,
     }
     return render(request, 'pages/clients/index.html', context)
+
+@login_required
+@permission_required('base.add_client', raise_exception=True)
+def addClient(request):
+    """
+    Create a new Client instance.
+    """
+    if request.method == 'POST':
+        form = ClientForm(request.POST)
+        if form.is_valid():
+            client = form.save()
+            messages.success(
+                request, 
+                _("The client '%(client)s' has been created successfully.") % {'client': client.name}
+            )
+            return redirect(reverse('base:getClients'))
+        else:
+            messages.error(request, _("Please correct the errors below and try again."))
+    else:
+        form = ClientForm()
+    
+    context = {
+        'form': form,
+        'title': _('Add New Client'),
+    }
+    return render(request, 'pages/clients/create.html', context)
