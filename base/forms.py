@@ -1,4 +1,5 @@
 from django import forms
+from base.models import *
 from account.models import *
 from django.contrib.auth.models import Permission
 from django.utils.translation import gettext_lazy as _
@@ -44,4 +45,35 @@ class RoleForm(forms.ModelForm):
             raise forms.ValidationError(
                 _('A role with this name already exists. Please choose a different name.')
             )
+        return name
+
+class ProductForm(forms.ModelForm):
+    """
+    Form for creating and updating Product instances.
+    """
+    class Meta:
+        model = Product
+        fields = ['name']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter product name',
+                'required': 'required',
+            }),
+        }
+        labels = {
+            'name': _('Product Name'),
+        }
+        error_messages = {
+            'name': {
+                'required': _('Please enter a product name.'),
+                'unique': _('This product name is already in use. Please choose a different name.'),
+                'max_length': _('Product name cannot exceed 255 characters.'),
+            },
+        }
+
+    def clean_name(self):
+        name = self.cleaned_data.get('name')
+        if Product.objects.filter(name__iexact=name).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError(_('A product with this name already exists. Please choose a different name.'))
         return name
