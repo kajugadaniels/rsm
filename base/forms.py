@@ -1,7 +1,7 @@
 from django import forms
 from account.models import *
-from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import Permission
+from django.utils.translation import gettext_lazy as _
 
 class RoleForm(forms.ModelForm):
     """
@@ -9,12 +9,12 @@ class RoleForm(forms.ModelForm):
     """
     permissions = forms.ModelMultipleChoiceField(
         queryset=Permission.objects.all(),
-        widget=forms.SelectMultiple(attrs={
-            'class': 'form-control',
+        widget=forms.CheckboxSelectMultiple(attrs={
+            'class': 'form-check-input',
         }),
         required=False,
         label=_('Permissions'),
-        help_text=_('Select the permissions to assign to this role.'),
+        help_text=_('Select the permissions that this role should have.')
     )
 
     class Meta:
@@ -41,5 +41,5 @@ class RoleForm(forms.ModelForm):
     def clean_name(self):
         name = self.cleaned_data.get('name')
         if Role.objects.filter(name__iexact=name).exclude(pk=self.instance.pk).exists():
-            raise forms.ValidationError(_('This role name is already in use. Please choose a different name.'))
+            raise forms.ValidationError(_('A role with this name already exists. Please choose a different name.'))
         return name
