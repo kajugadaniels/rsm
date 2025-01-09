@@ -2,6 +2,7 @@ from base.forms import *
 from account.models import *
 from django.urls import reverse
 from django.contrib import messages
+from django.utils.translation import gettext_lazy as _
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import permission_required, login_required
 
