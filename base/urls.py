@@ -22,4 +22,10 @@ urlpatterns = [
     path('client/add/', addClient, name="addClient"),
     path('client/edit/<int:id>/', editClient, name="editClient"),
     path('client/delete/<int:id>/', deleteClient, name="deleteClient"),
+
+    path('orders/', getOrders, name="getOrders"),
+    path('order/add/', addOrder, name="addOrder"),
+    path('order/edit/<str:orderId>/', editOrder, name="editOrder"),
+    path('order/delete/<str:orderId>/', deleteOrder, name="deleteOrder"),
+    path('order/<str:orderId>/', showOrder, name="showOrder"),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
