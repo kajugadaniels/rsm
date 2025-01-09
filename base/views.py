@@ -6,8 +6,8 @@ from django.urls import reverse
 from django.db import transaction
 from django.contrib import messages
 from django.http import JsonResponse
-from django.forms.models import model_to_dict
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.utils.translation import gettext_lazy as _
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import permission_required, login_required
@@ -472,3 +472,23 @@ def showOrder(request, orderId):
     }
 
     return render(request, 'pages/orders/show.html', context)
+
+@require_POST
+@login_required
+@permission_required('base.delete_orderproduct', raise_exception=True)
+def deleteOrderProduct(request, id):
+    """
+    Handle AJAX request to delete an OrderProduct instance.
+    """
+    if not request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'success': False, 'error': 'Invalid request.'}, status=400)
+    
+    order_product = get_object_or_404(OrderProduct, id=id)
+    order = order_product.order
+    
+    try:
+        order_product.delete()
+        order.calculate_grand_total()
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)

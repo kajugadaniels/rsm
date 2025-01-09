@@ -201,236 +201,236 @@
 </style>
 
 <script>
-// Function to get CSRF token from cookies
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            // Does this cookie string begin with the name we want?
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
+    // Function to get CSRF token from cookies
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
             }
         }
+        return cookieValue;
     }
-    return cookieValue;
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    let orderProductIndex = {{ order_product_forms|length }};
-
-    // Modal Elements
-    const addClientButton = document.getElementById('add-client-button');
-    const addClientModal = document.getElementById('add-client-modal');
-    const closeButton = document.querySelector('.close-button');
-    const cancelAddClientButton = document.getElementById('cancel-add-client');
-    const addClientForm = document.getElementById('add-client-form');
-    const clientSelect = document.getElementById('client-select');
-    const clientSearch = document.getElementById('client-search');
-
-    // Show Modal
-    addClientButton.addEventListener('click', function() {
-        addClientModal.style.display = 'flex';
-    });
-
-    // Close Modal
-    closeButton.addEventListener('click', function() {
-        addClientModal.style.display = 'none';
-        clearClientFormErrors();
-    });
-
-    cancelAddClientButton.addEventListener('click', function() {
-        addClientModal.style.display = 'none';
-        clearClientFormErrors();
-    });
-
-    // Handle Add Client Form Submission
-    addClientForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        clearClientFormErrors();
-        const formData = new FormData(addClientForm);
-
-        fetch("{% url 'base:addClient' %}", {
-            method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-            body: formData
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(data => { throw data; });
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Assume data contains 'id', 'phone_number', and 'name'
-            const newOption = document.createElement('option');
-            newOption.value = data.id;
-            newOption.textContent = `${data.phone_number} (${data.name})`;
-            newOption.selected = true;
-            clientSelect.appendChild(newOption);
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        let orderProductIndex = {{ order_product_forms|length }};
+    
+        // Modal Elements
+        const addClientButton = document.getElementById('add-client-button');
+        const addClientModal = document.getElementById('add-client-modal');
+        const closeButton = document.querySelector('.close-button');
+        const cancelAddClientButton = document.getElementById('cancel-add-client');
+        const addClientForm = document.getElementById('add-client-form');
+        const clientSelect = document.getElementById('client-select');
+        const clientSearch = document.getElementById('client-search');
+    
+        // Show Modal
+        addClientButton.addEventListener('click', function() {
+            addClientModal.style.display = 'flex';
+        });
+    
+        // Close Modal
+        closeButton.addEventListener('click', function() {
             addClientModal.style.display = 'none';
-            addClientForm.reset();
-        })
-        .catch(errorData => {
-            // Display errors
-            if (errorData.errors) {
-                for (const [field, errors] of Object.entries(errorData.errors)) {
-                    const errorDiv = document.getElementById(`error-${field}`);
-                    if (errorDiv) {
-                        errorDiv.textContent = errors.join(' ');
+            clearClientFormErrors();
+        });
+    
+        cancelAddClientButton.addEventListener('click', function() {
+            addClientModal.style.display = 'none';
+            clearClientFormErrors();
+        });
+    
+        // Handle Add Client Form Submission
+        addClientForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            clearClientFormErrors();
+            const formData = new FormData(addClientForm);
+    
+            fetch("{% url 'base:addClient' %}", {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => { throw data; });
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Assume data contains 'id', 'phone_number', and 'name'
+                const newOption = document.createElement('option');
+                newOption.value = data.id;
+                newOption.textContent = `${data.phone_number} (${data.name})`;
+                newOption.selected = true;
+                clientSelect.appendChild(newOption);
+                addClientModal.style.display = 'none';
+                addClientForm.reset();
+            })
+            .catch(errorData => {
+                // Display errors
+                if (errorData.errors) {
+                    for (const [field, errors] of Object.entries(errorData.errors)) {
+                        const errorDiv = document.getElementById(`error-${field}`);
+                        if (errorDiv) {
+                            errorDiv.textContent = errors.join(' ');
+                        }
+                    }
+                } else {
+                    alert('An unexpected error occurred.');
+                }
+            });
+        });
+    
+        // Clear Client Form Errors
+        function clearClientFormErrors() {
+            const errorFields = ['name', 'phone_number', 'destination'];
+            errorFields.forEach(field => {
+                const errorDiv = document.getElementById(`error-${field}`);
+                if (errorDiv) {
+                    errorDiv.textContent = '';
+                }
+            });
+        }
+    
+        // Add Order Product Row
+        const addOrderProductButton = document.getElementById('add-order-product');
+        const orderProductsTable = document.getElementById('order-products-table').getElementsByTagName('tbody')[0];
+    
+        addOrderProductButton.addEventListener('click', function() {
+            const newRow = document.createElement('tr');
+            newRow.classList.add('order-product-form');
+            newRow.setAttribute('data-form-prefix', orderProductIndex);
+    
+            newRow.innerHTML = `
+                <td>
+                    <select name="${orderProductIndex}-product" class="form-select product-select" required>
+                        <option value="">Select a product</option>
+                        {% for product in order_product_forms.0.fields.product.queryset %}
+                            <option value="{{ product.id }}">{{ product.name }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td>
+                    <input type="number" name="${orderProductIndex}-size" class="form-control size-input" min="0" step="0.1" required>
+                </td>
+                <td>
+                    <input type="number" name="${orderProductIndex}-quantity" class="form-control quantity-input" min="1" required>
+                </td>
+                <td>
+                    <input type="number" name="${orderProductIndex}-unit_price" class="form-control unit-price-input" min="0" step="0.01" required>
+                </td>
+                <td>
+                    <input type="text" name="${orderProductIndex}-total_size" class="form-control total-size-input" readonly>
+                </td>
+                <td>
+                    <input type="text" name="${orderProductIndex}-total_price" class="form-control total-price-input" readonly>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-danger remove-order-product">Remove</button>
+                </td>
+                <input type="hidden" name="${orderProductIndex}-id" value="">
+            `;
+            orderProductsTable.appendChild(newRow);
+            orderProductIndex++;
+        });
+    
+        // Remove Order Product Row with AJAX Deletion
+        orderProductsTable.addEventListener('click', function(e) {
+            if (e.target && e.target.matches('button.remove-order-product')) {
+                const row = e.target.closest('tr');
+                const formPrefix = row.getAttribute('data-form-prefix');
+                const orderProductIdInput = row.querySelector(`input[name="${formPrefix}-id"]`);
+                const orderProductId = orderProductIdInput ? orderProductIdInput.value : null;
+    
+                if (orderProductId) {
+                    // Existing OrderProduct, send AJAX request to delete
+                    if (confirm('Are you sure you want to remove this product from the order?')) {
+                        fetch("{% url 'base:deleteOrderProduct' 0 %}".replace('/0/', `/${orderProductId}/`), {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCookie('csrftoken'),
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                            body: JSON.stringify({})
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                row.remove();
+                                updateGrandTotal();
+                            } else {
+                                alert(data.error || 'Failed to delete the product.');
+                            }
+                        })
+                        .catch(error => {
+                            alert('An error occurred while deleting the product.');
+                        });
+                    }
+                } else {
+                    // New OrderProduct, just remove the row
+                    const rows = orderProductsTable.getElementsByTagName('tr');
+                    if (rows.length > 1) {
+                        row.remove();
+                        updateGrandTotal();
+                    } else {
+                        alert('At least one product must be present in the order.');
                     }
                 }
-            } else {
-                alert('An unexpected error occurred.');
             }
         });
-    });
-
-    // Clear Client Form Errors
-    function clearClientFormErrors() {
-        const errorFields = ['name', 'phone_number', 'destination'];
-        errorFields.forEach(field => {
-            const errorDiv = document.getElementById(`error-${field}`);
-            if (errorDiv) {
-                errorDiv.textContent = '';
+    
+        // Handle Live Calculations
+        orderProductsTable.addEventListener('input', function(e) {
+            if (e.target && (e.target.matches('.size-input') || e.target.matches('.quantity-input') || e.target.matches('.unit-price-input'))) {
+                const row = e.target.closest('tr');
+                const size = parseFloat(row.querySelector('.size-input').value) || 0;
+                const quantity = parseInt(row.querySelector('.quantity-input').value) || 0;
+                const unitPrice = parseFloat(row.querySelector('.unit-price-input').value) || 0;
+    
+                const totalSize = size * quantity;
+                const totalPrice = totalSize * unitPrice;
+    
+                row.querySelector('.total-size-input').value = totalSize.toFixed(2);
+                row.querySelector('.total-price-input').value = `RWF ${totalPrice.toFixed(2)}`;
+    
+                updateGrandTotal();
             }
         });
-    }
-
-    // Add Order Product Row
-    const addOrderProductButton = document.getElementById('add-order-product');
-    const orderProductsTable = document.getElementById('order-products-table').getElementsByTagName('tbody')[0];
-
-    addOrderProductButton.addEventListener('click', function() {
-        const newRow = document.createElement('tr');
-        newRow.classList.add('order-product-form');
-        newRow.setAttribute('data-form-prefix', orderProductIndex);
-
-        newRow.innerHTML = `
-            <td>
-                <select name="${orderProductIndex}-product" class="form-select product-select" required>
-                    <option value="">Select a product</option>
-                    {% for product in order_product_forms.0.fields.product.queryset %}
-                        <option value="{{ product.id }}">{{ product.name }}</option>
-                    {% endfor %}
-                </select>
-            </td>
-            <td>
-                <input type="number" name="${orderProductIndex}-size" class="form-control size-input" min="0" step="0.1" required>
-            </td>
-            <td>
-                <input type="number" name="${orderProductIndex}-quantity" class="form-control quantity-input" min="1" required>
-            </td>
-            <td>
-                <input type="number" name="${orderProductIndex}-unit_price" class="form-control unit-price-input" min="0" step="0.01" required>
-            </td>
-            <td>
-                <input type="text" name="${orderProductIndex}-total_size" class="form-control total-size-input" readonly>
-            </td>
-            <td>
-                <input type="text" name="${orderProductIndex}-total_price" class="form-control total-price-input" readonly>
-            </td>
-            <td>
-                <button type="button" class="btn btn-danger remove-order-product">Remove</button>
-            </td>
-            <input type="hidden" name="${orderProductIndex}-id" value="">
-        `;
-        orderProductsTable.appendChild(newRow);
-        orderProductIndex++;
-    });
-
-    // Remove Order Product Row with AJAX Deletion
-    orderProductsTable.addEventListener('click', function(e) {
-        if (e.target && e.target.matches('button.remove-order-product')) {
-            const row = e.target.closest('tr');
-            const formPrefix = row.getAttribute('data-form-prefix');
-            const orderProductIdInput = row.querySelector(`input[name="${formPrefix}-id"]`);
-            const orderProductId = orderProductIdInput ? orderProductIdInput.value : null;
-
-            if (orderProductId) {
-                // Existing OrderProduct, send AJAX request to delete
-                if (confirm('Are you sure you want to remove this product from the order?')) {
-                    fetch("{% url 'base:deleteOrderProduct' 0 %}".replace('/0/', `/${orderProductId}/`), {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': getCookie('csrftoken'),
-                            'X-Requested-With': 'XMLHttpRequest',
-                        },
-                        body: JSON.stringify({})
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            row.remove();
-                            updateGrandTotal();
-                        } else {
-                            alert(data.error || 'Failed to delete the product.');
-                        }
-                    })
-                    .catch(error => {
-                        alert('An error occurred while deleting the product.');
-                    });
-                }
-            } else {
-                // New OrderProduct, just remove the row
-                const rows = orderProductsTable.getElementsByTagName('tr');
-                if (rows.length > 1) {
-                    row.remove();
-                    updateGrandTotal();
+    
+        // Update Grand Total
+        function updateGrandTotal() {
+            let grandTotal = 0.00;
+            const totalPriceInputs = document.querySelectorAll('.total-price-input');
+            totalPriceInputs.forEach(function(input) {
+                const price = parseFloat(input.value.replace('RWF ', '')) || 0.00;
+                grandTotal += price;
+            });
+            document.getElementById('grand-total').value = `RWF ${grandTotal.toFixed(2)}`;
+        }
+    
+        // Client Search Functionality
+        clientSearch.addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+            const options = clientSelect.options;
+            for (let i = 1; i < options.length; i++) { // Start from 1 to skip the placeholder
+                const optionText = options[i].text.toLowerCase();
+                if (optionText.includes(query)) {
+                    options[i].style.display = '';
                 } else {
-                    alert('At least one product must be present in the order.');
+                    options[i].style.display = 'none';
                 }
             }
-        }
-    });
-
-    // Handle Live Calculations
-    orderProductsTable.addEventListener('input', function(e) {
-        if (e.target && (e.target.matches('.size-input') || e.target.matches('.quantity-input') || e.target.matches('.unit-price-input'))) {
-            const row = e.target.closest('tr');
-            const size = parseFloat(row.querySelector('.size-input').value) || 0;
-            const quantity = parseInt(row.querySelector('.quantity-input').value) || 0;
-            const unitPrice = parseFloat(row.querySelector('.unit-price-input').value) || 0;
-
-            const totalSize = size * quantity;
-            const totalPrice = totalSize * unitPrice;
-
-            row.querySelector('.total-size-input').value = totalSize.toFixed(2);
-            row.querySelector('.total-price-input').value = `RWF ${totalPrice.toFixed(2)}`;
-
-            updateGrandTotal();
-        }
-    });
-
-    // Update Grand Total
-    function updateGrandTotal() {
-        let grandTotal = 0.00;
-        const totalPriceInputs = document.querySelectorAll('.total-price-input');
-        totalPriceInputs.forEach(function(input) {
-            const price = parseFloat(input.value.replace('RWF ', '')) || 0.00;
-            grandTotal += price;
         });
-        document.getElementById('grand-total').value = `RWF ${grandTotal.toFixed(2)}`;
-    }
-
-    // Client Search Functionality
-    clientSearch.addEventListener('input', function() {
-        const query = this.value.toLowerCase();
-        const options = clientSelect.options;
-        for (let i = 1; i < options.length; i++) { // Start from 1 to skip the placeholder
-            const optionText = options[i].text.toLowerCase();
-            if (optionText.includes(query)) {
-                options[i].style.display = '';
-            } else {
-                options[i].style.display = 'none';
-            }
-        }
     });
-});
-</script>
+</script>    
 {% endblock %}
