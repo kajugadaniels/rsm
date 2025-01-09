@@ -253,3 +253,25 @@ def editClient(request, id):
     }
 
     return render(request, 'pages/clients/edit.html', context)
+
+@login_required
+@permission_required('base.delete_client', raise_exception=True)
+def deleteClient(request, id):
+    """
+    Delete an existing Client instance identified by its ID.
+    """
+    client = get_object_or_404(Client, id=id)
+    
+    if request.method == 'POST':
+        client.delete()
+        messages.success(
+            request, 
+            _("The client '%(client)s' has been deleted successfully.") % {'client': client.name}
+        )
+        return redirect(reverse('base:getClients'))
+    
+    context = {
+        'client': client,
+    }
+
+    return render(request, 'pages/clients/delete.html', context)
